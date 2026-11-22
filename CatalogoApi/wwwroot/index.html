@@ -10,9 +10,19 @@
             --card-bg: #1e293b;
             --primary: #3b82f6;
             --primary-hover: #2563eb;
+            --scalar: #059669;
+            --scalar-hover: #047857;
+            --twitch: #9146FF;
+            --twitch-hover: #772ce8;
+            --twitter: #000000;
+            --twitter-hover: #1f2937;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --border-color: #334155;
+            --success-bg: #064e3b;
+            --success-text: #6ee7b7;
         }
 
         * {
@@ -35,7 +45,7 @@
         .container {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 14px;
             padding: 2.5rem;
             max-width: 650px;
             width: 100%;
@@ -52,7 +62,7 @@
 
         p.description {
             color: var(--text-muted);
-            margin-bottom: 2rem;
+            margin-bottom: 1.75rem;
             font-size: 1rem;
             line-height: 1.5;
         }
@@ -62,18 +72,22 @@
         }
 
         .btn {
-            display: inline-block;
-            background-color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
             color: white;
             text-decoration: none;
             font-weight: 600;
             padding: 0.75rem 1.5rem;
             border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
             transition: background-color 0.2s ease, transform 0.1s ease;
         }
 
         .btn:hover {
-            background-color: var(--primary-hover);
             transform: translateY(-1px);
         }
 
@@ -81,11 +95,92 @@
             transform: translateY(0);
         }
 
+        .btn-scalar {
+            background-color: var(--scalar);
+        }
+        .btn-scalar:hover {
+            background-color: var(--scalar-hover);
+        }
+
+        .btn-twitch {
+            background-color: var(--twitch);
+        }
+        .btn-twitch:hover {
+            background-color: var(--twitch-hover);
+        }
+
+        .btn-twitter {
+            background-color: var(--twitter);
+            border: 1px solid #475569;
+        }
+        .btn-twitter:hover {
+            background-color: var(--twitter-hover);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+        }
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
+        }
+
         .section-box {
             border-top: 1px solid var(--border-color);
             padding-top: 1.5rem;
             margin-top: 1.5rem;
             text-align: left;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .oauth-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .session-info {
+            background-color: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .session-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95rem;
+        }
+
+        .session-label {
+            color: var(--text-muted);
+        }
+
+        .session-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .badge-active {
+            display: inline-block;
+            background-color: var(--success-bg);
+            color: var(--success-text);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            align-self: center;
         }
     </style>
 </head>
@@ -95,12 +190,96 @@
         <p class="description">Servicio base para la gestión de catálogo audiovisual y autenticación multi-proveedor.</p>
 
         <div class="actions">
-            <a href="/swagger" class="btn" id="swagger-link">Ver Documentación Swagger</a>
+            <a href="/scalar/v1" class="btn btn-scalar" id="scalar-link">Ver Documentación de la API (Scalar)</a>
         </div>
 
         <!-- Contenedor botones OAuth -->
+        <section class="section-box" id="oauth-container">
+            <h2 class="section-title">Autenticación OAuth 2.0</h2>
+            <div class="oauth-buttons">
+                <a href="/api/auth/login/twitch" class="btn btn-twitch" id="btn-login-twitch">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>
+                    </svg>
+                    Iniciar sesión con Twitch
+                </a>
+                <a href="/api/auth/login/twitter" class="btn btn-twitter" id="btn-login-twitter">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                    Iniciar sesión con X
+                </a>
+            </div>
+        </section>
 
         <!-- Contenedor estado de sesión -->
+        <section class="section-box" id="session-container">
+            <h2 class="section-title">Estado de la Sesión</h2>
+            <div id="session-content">
+                <p style="color: var(--text-muted); text-align: center;">Cargando estado...</p>
+            </div>
+        </section>
     </main>
+
+    <script>
+        async function loadSessionStatus() {
+            const sessionContent = document.getElementById('session-content');
+
+            try {
+                const response = await fetch('/api/auth/me');
+                if (!response.ok) {
+                    throw new Error('Error al consultar el estado de sesión');
+                }
+
+                const data = await response.json();
+
+                if (data.autenticado) {
+                    sessionContent.innerHTML = `
+                        <div class="session-info">
+                            <span class="badge-active">Sesión Activa</span>
+                            <div class="session-row">
+                                <span class="session-label">Proveedor:</span>
+                                <span class="session-value">${data.proveedor}</span>
+                            </div>
+                            <div class="session-row">
+                                <span class="session-label">Usuario:</span>
+                                <span class="session-value">${data.usuario || '(sin nombre)'}</span>
+                            </div>
+                            <div class="session-row">
+                                <span class="session-label">ID Proveedor:</span>
+                                <span class="session-value">${data.id || '(no disponible)'}</span>
+                            </div>
+                            <button class="btn btn-danger" style="margin-top: 0.5rem;" onclick="logout()">Cerrar sesión</button>
+                        </div>
+                    `;
+                } else {
+                    sessionContent.innerHTML = `
+                        <p style="color: var(--text-muted); text-align: center;">No has iniciado sesión en el sistema.</p>
+                    `;
+                }
+            } catch (error) {
+                console.error(error);
+                sessionContent.innerHTML = `
+                    <p style="color: var(--danger); text-align: center;">Error al verificar el estado de autenticación.</p>
+                `;
+            }
+        }
+
+        async function logout() {
+            try {
+                const response = await fetch('/api/auth/logout', { method: 'POST' });
+                if (response.ok) {
+                    await loadSessionStatus();
+                } else {
+                    alert('Error al cerrar la sesión.');
+                }
+            } catch (error) {
+                console.error('Error al cerrar sesión:', error);
+                alert('Ocurrió un error en la solicitud de cierre de sesión.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadSessionStatus);
+    </script>
 </body>
 </html>
