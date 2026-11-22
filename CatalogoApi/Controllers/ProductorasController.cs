@@ -35,7 +35,7 @@ public class ProductorasController : ControllerBase
 
         if (productora == null)
         {
-            return NotFound(new { mensaje = $"Productora con ID {id} no encontrada." });
+            return NotFound(new { mensaje = $"Productora con ID {id} no encontrada o no se encuentra activa." });
         }
         return Ok(productora);
     }
@@ -88,9 +88,9 @@ public class ProductorasController : ControllerBase
         }
 
         var existing = await _context.Productoras.FindAsync(id);
-        if (existing == null)
+        if (existing == null || !existing.Activo)
         {
-            return NotFound(new { mensaje = $"Productora con ID {id} no encontrada." });
+            return NotFound(new { mensaje = $"Productora con ID {id} no existe o no se encuentra activa." });
         }
 
         var existeNombre = await _context.Productoras
@@ -105,9 +105,13 @@ public class ProductorasController : ControllerBase
         existing.AnioFundacion = productora.AnioFundacion;
         existing.SitioWeb = productora.SitioWeb;
         existing.Activo = productora.Activo;
-        if (productora.EliminadoEn != null)
+        if (!productora.Activo && existing.EliminadoEn == null)
         {
-            existing.EliminadoEn = productora.EliminadoEn;
+            existing.EliminadoEn = productora.EliminadoEn ?? DateTime.UtcNow;
+        }
+        else if (productora.Activo)
+        {
+            existing.EliminadoEn = null;
         }
 
         try
@@ -130,12 +134,13 @@ public class ProductorasController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var productora = await _context.Productoras.FindAsync(id);
-        if (productora == null)
+        if (productora == null || !productora.Activo)
         {
-            return NotFound(new { mensaje = $"Productora con ID {id} no encontrada." });
+            return NotFound(new { mensaje = $"Productora con ID {id} no existe o ya no se encuentra activa." });
         }
 
-        _context.Productoras.Remove(productora);
+        productora.Activo = false;
+        productora.EliminadoEn = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
         return NoContent();

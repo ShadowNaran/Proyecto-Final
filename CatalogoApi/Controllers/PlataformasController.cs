@@ -35,7 +35,7 @@ public class PlataformasController : ControllerBase
 
         if (plataforma == null)
         {
-            return NotFound(new { mensaje = $"Plataforma con ID {id} no encontrada." });
+            return NotFound(new { mensaje = $"Plataforma con ID {id} no encontrada o no se encuentra activa." });
         }
         return Ok(plataforma);
     }
@@ -88,9 +88,9 @@ public class PlataformasController : ControllerBase
         }
 
         var existing = await _context.Plataformas.FindAsync(id);
-        if (existing == null)
+        if (existing == null || !existing.Activo)
         {
-            return NotFound(new { mensaje = $"Plataforma con ID {id} no encontrada." });
+            return NotFound(new { mensaje = $"Plataforma con ID {id} no existe o no se encuentra activa." });
         }
 
         var existeNombre = await _context.Plataformas
@@ -105,9 +105,13 @@ public class PlataformasController : ControllerBase
         existing.PrecioMensual = plataforma.PrecioMensual;
         existing.PaisDisponible = plataforma.PaisDisponible;
         existing.Activo = plataforma.Activo;
-        if (plataforma.EliminadoEn != null)
+        if (!plataforma.Activo && existing.EliminadoEn == null)
         {
-            existing.EliminadoEn = plataforma.EliminadoEn;
+            existing.EliminadoEn = plataforma.EliminadoEn ?? DateTime.UtcNow;
+        }
+        else if (plataforma.Activo)
+        {
+            existing.EliminadoEn = null;
         }
 
         try
@@ -130,12 +134,13 @@ public class PlataformasController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var plataforma = await _context.Plataformas.FindAsync(id);
-        if (plataforma == null)
+        if (plataforma == null || !plataforma.Activo)
         {
-            return NotFound(new { mensaje = $"Plataforma con ID {id} no encontrada." });
+            return NotFound(new { mensaje = $"Plataforma con ID {id} no existe o ya no se encuentra activa." });
         }
 
-        _context.Plataformas.Remove(plataforma);
+        plataforma.Activo = false;
+        plataforma.EliminadoEn = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
         return NoContent();
