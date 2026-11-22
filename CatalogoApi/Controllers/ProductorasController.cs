@@ -19,18 +19,20 @@ public class ProductorasController : ControllerBase
     }
 
     [HttpGet]
-    [AllowAnonymous]
     public async Task<IActionResult> GetAll()
     {
-        var productoras = await _context.Productoras.ToListAsync();
+        var productoras = await _context.Productoras
+            .Where(p => p.Activo)
+            .ToListAsync();
         return Ok(productoras);
     }
 
     [HttpGet("{id}")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetById(int id)
     {
-        var productora = await _context.Productoras.FindAsync(id);
+        var productora = await _context.Productoras
+            .FirstOrDefaultAsync(p => p.Id == id && p.Activo);
+
         if (productora == null)
         {
             return NotFound(new { mensaje = $"Productora con ID {id} no encontrada." });

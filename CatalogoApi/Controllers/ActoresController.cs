@@ -19,18 +19,20 @@ public class ActoresController : ControllerBase
     }
 
     [HttpGet]
-    [AllowAnonymous]
     public async Task<IActionResult> GetAll()
     {
-        var actores = await _context.Actores.ToListAsync();
+        var actores = await _context.Actores
+            .Where(a => a.Activo)
+            .ToListAsync();
         return Ok(actores);
     }
 
     [HttpGet("{id}")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetById(int id)
     {
-        var actor = await _context.Actores.FindAsync(id);
+        var actor = await _context.Actores
+            .FirstOrDefaultAsync(a => a.Id == id && a.Activo);
+
         if (actor == null)
         {
             return NotFound(new { mensaje = $"Actor con ID {id} no encontrado." });
