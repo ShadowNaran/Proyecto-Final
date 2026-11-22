@@ -19,18 +19,20 @@ public class DirectoresController : ControllerBase
     }
 
     [HttpGet]
-    [AllowAnonymous]
     public async Task<IActionResult> GetAll()
     {
-        var directores = await _context.Directores.ToListAsync();
+        var directores = await _context.Directores
+            .Where(d => d.Activo)
+            .ToListAsync();
         return Ok(directores);
     }
 
     [HttpGet("{id}")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetById(int id)
     {
-        var director = await _context.Directores.FindAsync(id);
+        var director = await _context.Directores
+            .FirstOrDefaultAsync(d => d.Id == id && d.Activo);
+
         if (director == null)
         {
             return NotFound(new { mensaje = $"Director con ID {id} no encontrado." });

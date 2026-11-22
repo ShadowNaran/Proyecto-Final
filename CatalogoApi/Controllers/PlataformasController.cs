@@ -19,18 +19,20 @@ public class PlataformasController : ControllerBase
     }
 
     [HttpGet]
-    [AllowAnonymous]
     public async Task<IActionResult> GetAll()
     {
-        var plataformas = await _context.Plataformas.ToListAsync();
+        var plataformas = await _context.Plataformas
+            .Where(p => p.Activo)
+            .ToListAsync();
         return Ok(plataformas);
     }
 
     [HttpGet("{id}")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetById(int id)
     {
-        var plataforma = await _context.Plataformas.FindAsync(id);
+        var plataforma = await _context.Plataformas
+            .FirstOrDefaultAsync(p => p.Id == id && p.Activo);
+
         if (plataforma == null)
         {
             return NotFound(new { mensaje = $"Plataforma con ID {id} no encontrada." });
