@@ -37,6 +37,20 @@ public class AuthController : ControllerBase
         return Challenge(properties, "Spotify");
     }
 
+    [HttpGet("login/dropbox")]
+    public IActionResult LoginDropbox()
+    {
+        var properties = new AuthenticationProperties { RedirectUri = "/" };
+        return Challenge(properties, "Dropbox");
+    }
+
+    [HttpGet("login/slack")]
+    public IActionResult LoginSlack()
+    {
+        var properties = new AuthenticationProperties { RedirectUri = "/" };
+        return Challenge(properties, "Slack");
+    }
+
     [HttpGet("me")]
     public IActionResult GetMe()
     {

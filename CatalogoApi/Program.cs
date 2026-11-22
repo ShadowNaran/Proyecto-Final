@@ -131,6 +131,32 @@ builder.Services.AddAuthentication(options =>
         context.Identity?.AddClaim(new Claim("provider", "Spotify"));
         return Task.CompletedTask;
     };
+})
+.AddDropbox("Dropbox", options =>
+{
+    options.ClientId = GetConfig("DROPBOX_CLIENT_ID", "Authentication:Dropbox:ClientId", "dummy-dropbox-client-id");
+    options.ClientSecret = GetConfig("DROPBOX_CLIENT_SECRET", "Authentication:Dropbox:ClientSecret", "dummy-dropbox-client-secret");
+    options.CallbackPath = new PathString(GetConfig("DROPBOX_CALLBACK_PATH", "Authentication:Dropbox:CallbackPath", "/signin-dropbox"));
+    options.SaveTokens = true;
+    options.Events.OnCreatingTicket = context =>
+    {
+        context.Identity?.AddClaim(new Claim("provider", "Dropbox"));
+        return Task.CompletedTask;
+    };
+})
+.AddSlack("Slack", options =>
+{
+    options.ClientId = GetConfig("SLACK_CLIENT_ID", "Authentication:Slack:ClientId", "dummy-slack-client-id");
+    options.ClientSecret = GetConfig("SLACK_CLIENT_SECRET", "Authentication:Slack:ClientSecret", "dummy-slack-client-secret");
+    options.CallbackPath = new PathString(GetConfig("SLACK_CALLBACK_PATH", "Authentication:Slack:CallbackPath", "/signin-slack"));
+    options.Scope.Add("identity.basic");
+    options.Scope.Add("identity.email");
+    options.SaveTokens = true;
+    options.Events.OnCreatingTicket = context =>
+    {
+        context.Identity?.AddClaim(new Claim("provider", "Slack"));
+        return Task.CompletedTask;
+    };
 });
 
 var app = builder.Build();
