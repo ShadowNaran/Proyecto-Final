@@ -19,6 +19,11 @@ public class AppDbContext : DbContext
     public DbSet<Serie> Series { get; set; }
     public DbSet<Temporada> Temporadas { get; set; }
 
+    public DbSet<Resena> Resenas { get; set; }
+    public DbSet<ListaReproduccion> ListasReproduccion { get; set; }
+    public DbSet<Favorito> Favoritos { get; set; }
+    public DbSet<Premio> Premios { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

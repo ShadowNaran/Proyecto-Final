@@ -135,6 +135,91 @@ namespace CatalogoApi.Migrations
                     b.ToTable("directores");
                 });
 
+            modelBuilder.Entity("CatalogoApi.Models.Favorito", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("activo");
+
+                    b.Property<DateTime>("CreadoEn")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("creado_en");
+
+                    b.Property<DateTime?>("EliminadoEn")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("eliminado_en");
+
+                    b.Property<string>("NotaPersonal")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("nota_personal");
+
+                    b.Property<string>("TipoContenido")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("tipo_contenido");
+
+                    b.Property<string>("TituloObra")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("titulo_obra");
+
+                    b.Property<string>("UsuarioEmail")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("usuario_email");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("favoritos");
+                });
+
+            modelBuilder.Entity("CatalogoApi.Models.ListaReproduccion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("activo");
+
+                    b.Property<DateTime>("CreadoEn")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("creado_en");
+
+                    b.Property<string>("Descripcion")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("descripcion");
+
+                    b.Property<DateTime?>("EliminadoEn")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("eliminado_en");
+
+                    b.Property<bool>("EsPublica")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("es_publica");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("nombre");
+
+                    b.Property<string>("Propietario")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("propietario");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("listas_reproduccion");
+                });
+
             modelBuilder.Entity("CatalogoApi.Models.Pelicula", b =>
                 {
                     b.Property<int>("Id")
@@ -234,6 +319,49 @@ namespace CatalogoApi.Migrations
                     b.ToTable("plataformas");
                 });
 
+            modelBuilder.Entity("CatalogoApi.Models.Premio", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("activo");
+
+                    b.Property<int>("Anio")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("anio");
+
+                    b.Property<string>("CategoriaPremio")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("categoria_premio");
+
+                    b.Property<DateTime>("CreadoEn")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("creado_en");
+
+                    b.Property<DateTime?>("EliminadoEn")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("eliminado_en");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("nombre");
+
+                    b.Property<string>("ObraGanadora")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("obra_ganadora");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("premios");
+                });
+
             modelBuilder.Entity("CatalogoApi.Models.Productora", b =>
                 {
                     b.Property<int>("Id")
@@ -276,6 +404,53 @@ namespace CatalogoApi.Migrations
                         .IsUnique();
 
                     b.ToTable("productoras");
+                });
+
+            modelBuilder.Entity("CatalogoApi.Models.Resena", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("activo");
+
+                    b.Property<string>("Autor")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("autor");
+
+                    b.Property<string>("Comentario")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("comentario");
+
+                    b.Property<DateTime>("CreadoEn")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("creado_en");
+
+                    b.Property<DateTime?>("EliminadoEn")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("eliminado_en");
+
+                    b.Property<int>("Puntuacion")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("puntuacion");
+
+                    b.Property<string>("TipoContenido")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("tipo_contenido");
+
+                    b.Property<string>("TituloObra")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("titulo_obra");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("resenas");
                 });
 
             modelBuilder.Entity("CatalogoApi.Models.Serie", b =>
