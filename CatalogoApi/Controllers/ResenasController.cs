@@ -65,4 +65,41 @@ public class ResenasController : ControllerBase
 
         return CreatedAtAction(nameof(GetById), new { id = resena.Id }, resena);
     }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, [FromBody] Resena resena)
+    {
+        if (id != resena.Id)
+        {
+            return BadRequest(new { mensaje = "El ID de la ruta no coincide con el ID del cuerpo." });
+        }
+
+        if (string.IsNullOrWhiteSpace(resena.Autor) ||
+            string.IsNullOrWhiteSpace(resena.TipoContenido) ||
+            string.IsNullOrWhiteSpace(resena.TituloObra))
+        {
+            return BadRequest(new { mensaje = "Autor, tipo_contenido y titulo_obra son obligatorios." });
+        }
+
+        if (resena.Puntuacion < 1 || resena.Puntuacion > 5)
+        {
+            return BadRequest(new { mensaje = "La puntuación debe estar entre 1 y 5." });
+        }
+
+        var existing = await _context.Resenas.FindAsync(id);
+        if (existing == null || !existing.Activo)
+        {
+            return NotFound(new { mensaje = $"Reseña con ID {id} no existe o no se encuentra activa." });
+        }
+
+        existing.Autor = resena.Autor;
+        existing.TipoContenido = resena.TipoContenido;
+        existing.TituloObra = resena.TituloObra;
+        existing.Puntuacion = resena.Puntuacion;
+        existing.Comentario = resena.Comentario;
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
 }
