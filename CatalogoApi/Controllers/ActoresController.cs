@@ -35,7 +35,7 @@ public class ActoresController : ControllerBase
 
         if (actor == null)
         {
-            return NotFound(new { mensaje = $"Actor con ID {id} no encontrado." });
+            return NotFound(new { mensaje = $"Actor con ID {id} no encontrado o no se encuentra activo." });
         }
         return Ok(actor);
     }
@@ -69,9 +69,9 @@ public class ActoresController : ControllerBase
         }
 
         var existing = await _context.Actores.FindAsync(id);
-        if (existing == null)
+        if (existing == null || !existing.Activo)
         {
-            return NotFound(new { mensaje = $"Actor con ID {id} no encontrado." });
+            return NotFound(new { mensaje = $"Actor con ID {id} no existe o no se encuentra activo." });
         }
 
         existing.Nombre = actor.Nombre;
@@ -79,9 +79,13 @@ public class ActoresController : ControllerBase
         existing.FechaNacimiento = actor.FechaNacimiento;
         existing.Biografia = actor.Biografia;
         existing.Activo = actor.Activo;
-        if (actor.EliminadoEn != null)
+        if (!actor.Activo && existing.EliminadoEn == null)
         {
-            existing.EliminadoEn = actor.EliminadoEn;
+            existing.EliminadoEn = actor.EliminadoEn ?? DateTime.UtcNow;
+        }
+        else if (actor.Activo)
+        {
+            existing.EliminadoEn = null;
         }
 
         await _context.SaveChangesAsync();

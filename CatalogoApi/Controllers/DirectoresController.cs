@@ -35,7 +35,7 @@ public class DirectoresController : ControllerBase
 
         if (director == null)
         {
-            return NotFound(new { mensaje = $"Director con ID {id} no encontrado." });
+            return NotFound(new { mensaje = $"Director con ID {id} no encontrado o no se encuentra activo." });
         }
         return Ok(director);
     }
@@ -69,9 +69,9 @@ public class DirectoresController : ControllerBase
         }
 
         var existing = await _context.Directores.FindAsync(id);
-        if (existing == null)
+        if (existing == null || !existing.Activo)
         {
-            return NotFound(new { mensaje = $"Director con ID {id} no encontrado." });
+            return NotFound(new { mensaje = $"Director con ID {id} no existe o no se encuentra activo." });
         }
 
         existing.Nombre = director.Nombre;
@@ -79,9 +79,13 @@ public class DirectoresController : ControllerBase
         existing.FechaNacimiento = director.FechaNacimiento;
         existing.Biografia = director.Biografia;
         existing.Activo = director.Activo;
-        if (director.EliminadoEn != null)
+        if (!director.Activo && existing.EliminadoEn == null)
         {
-            existing.EliminadoEn = director.EliminadoEn;
+            existing.EliminadoEn = director.EliminadoEn ?? DateTime.UtcNow;
+        }
+        else if (director.Activo)
+        {
+            existing.EliminadoEn = null;
         }
 
         await _context.SaveChangesAsync();
