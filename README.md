@@ -40,6 +40,54 @@ Comunidad y reconocimiento (Marco):
 - favoritos: usuario_email, tipo_contenido, titulo_obra, nota_personal
 - premios: nombre, categoria_premio, anio, obra_ganadora
 
+---
+
+## Autenticación OAuth 2.0 (Twitch y X / Twitter)
+
+El sistema implementa autenticación externa delegada mediante el protocolo OAuth 2.0:
+
+1. **Inicio de autorización**: El cliente hace clic en el botón de login correspondiente (`/api/auth/login/twitch` o `/api/auth/login/twitter`). El controlador `AuthController` emite un desafío (`Challenge`) especificando el esquema y la URL de redirección final (`/`).
+2. **Redirección al proveedor**: El middleware de ASP.NET Core redirige al usuario hacia el servidor de autorización del proveedor:
+   - **Twitch**: `https://id.twitch.tv/oauth2/authorize` solicitando el scope de lectura básico.
+   - **X (Twitter)**: `https://twitter.com/i/oauth2/authorize` bajo OAuth 2.0 con PKCE (Proof Key for Code Exchange) y scope `users.read`.
+3. **Consentimiento del usuario**: El usuario concede permisos en la interfaz del proveedor.
+4. **Callback y canje de código**: El proveedor redirige al navegador de vuelta a la aplicación local mediante la ruta registrada:
+   - `/signin-twitch` para Twitch.
+   - `/signin-twitter` para X.
+   El middleware intercepta la petición, valida los parámetros de seguridad (incluido el estado y el verificador PKCE en X) e intercambia el código de autorización (`code`) por un token de acceso (`access_token`) mediante una comunicación directa back-channel.
+5. **Consulta de perfil y sesión de usuario**:
+   - Con el token obtenido, se consulta el endpoint de información del usuario (`https://api.twitch.tv/helix/users/` en Twitch y `https://api.twitter.com/2/users/me` en X).
+   - Se extraen los claims del usuario (`NameIdentifier`, `Name`, `provider`).
+   - Se emite una cookie segura de sesión (`CookieAuthenticationDefaults.AuthenticationScheme`) con `SameSite=Lax` y `HttpOnly=true`.
+6. **Consulta y cierre de sesión**:
+   - `GET /api/auth/me`: Retorna el estado `{ autenticado, proveedor, usuario, id }` para la interfaz.
+   - `POST /api/auth/logout`: Cierra la sesión mediante `SignOutAsync` eliminando la cookie de autenticación.
+
+---
+
+## Análisis Técnico: Flujo OAuth en Meta (Facebook / Instagram)
+
+### App Review y Niveles de Acceso (Standard Access vs. Advanced Access)
+
+A diferencia de proveedores como Twitch o X —donde las aplicaciones pueden leer perfiles públicos básicos en modo desarrollo o producción sin auditorías previas—, el ecosistema de Meta (Meta for Developers) implementa un modelo de gobernanza estricto:
+
+1. **Modo Desarrollo vs. Modo Producción**:
+   - En **Modo Desarrollo (Development Mode)**, únicamente los usuarios agregados manualmente con roles en la app de Meta (Administradores, Desarrolladores o Evaluadores) pueden iniciar sesión con éxito. Cualquier usuario externo que intente iniciar sesión recibirá un mensaje de error indicando que la aplicación no está disponible.
+   - Para abrir la aplicación al público general, debe cambiarse a **Modo Producción (Live Mode)**.
+
+2. **Standard Access vs. Advanced Access**:
+   - **Standard Access**: Es el nivel asignado por defecto a los permisos de una aplicación. Permite realizar llamadas al Graph API y solicitar permisos únicamente respecto a usuarios que tienen un rol explícito en la app. No permite autenticar usuarios finales del público general.
+   - **Advanced Access**: Es indispensable para que cualquier usuario del público pueda autenticarse y conceder permisos a la aplicación en producción. Permisos esenciales como `public_profile`, `email` o accesos a páginas de negocio requieren solicitar Advanced Access.
+
+3. **Proceso de App Review (Revisión de Aplicaciones)**:
+   - Para obtener **Advanced Access**, la aplicación debe someterse a una revisión formal por parte del equipo de Meta.
+   - Requiere proporcionar una justificación detallada de cada permiso solicitado, un video explicativo demostrando la experiencia de usuario y el uso de los datos, el cumplimiento estricto de las Políticas de la Plataforma de Meta y, en muchos casos, la **Verificación de Negocio (Business Verification)** aportando documentación legal y fiscal de la empresa.
+
+4. **Comparativa**:
+   - Mientras en Twitch y X basta con registrar el `ClientId`, `ClientSecret` y las URLs de retorno (`Callback URLs`) para admitir inicios de sesión globales inmediatos, en Meta la autenticación de usuarios externos depende del cumplimiento de la auditoría de App Review y la habilitación de Advanced Access.
+
+---
+
 Flujo de trabajo y ejecucion
 
 Las reglas para hacer fork, nombrar ramas, escribir commits y abrir Pull Requests estan detalladas en CONTRIBUTING.md.
