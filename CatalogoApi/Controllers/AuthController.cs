@@ -23,6 +23,20 @@ public class AuthController : ControllerBase
         return Challenge(properties, "Twitter");
     }
 
+    [HttpGet("login/discord")]
+    public IActionResult LoginDiscord()
+    {
+        var properties = new AuthenticationProperties { RedirectUri = "/" };
+        return Challenge(properties, "Discord");
+    }
+
+    [HttpGet("login/spotify")]
+    public IActionResult LoginSpotify()
+    {
+        var properties = new AuthenticationProperties { RedirectUri = "/" };
+        return Challenge(properties, "Spotify");
+    }
+
     [HttpGet("me")]
     public IActionResult GetMe()
     {
