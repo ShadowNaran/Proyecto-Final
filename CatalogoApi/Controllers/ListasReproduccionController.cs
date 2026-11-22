@@ -89,4 +89,20 @@ public class ListasReproduccionController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var lista = await _context.ListasReproduccion.FindAsync(id);
+        if (lista == null || !lista.Activo)
+        {
+            return NotFound(new { mensaje = $"Lista de reproducción con ID {id} no existe o ya fue eliminada." });
+        }
+
+        lista.Activo = false;
+        lista.EliminadoEn = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
 }

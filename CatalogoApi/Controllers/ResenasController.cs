@@ -102,4 +102,20 @@ public class ResenasController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var resena = await _context.Resenas.FindAsync(id);
+        if (resena == null || !resena.Activo)
+        {
+            return NotFound(new { mensaje = $"Reseña con ID {id} no existe o ya fue eliminada." });
+        }
+
+        resena.Activo = false;
+        resena.EliminadoEn = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
 }

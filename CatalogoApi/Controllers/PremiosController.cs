@@ -91,4 +91,20 @@ public class PremiosController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var premio = await _context.Premios.FindAsync(id);
+        if (premio == null || !premio.Activo)
+        {
+            return NotFound(new { mensaje = $"Premio con ID {id} no existe o ya fue eliminado." });
+        }
+
+        premio.Activo = false;
+        premio.EliminadoEn = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
 }

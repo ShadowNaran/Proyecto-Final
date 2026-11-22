@@ -91,4 +91,20 @@ public class FavoritosController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var favorito = await _context.Favoritos.FindAsync(id);
+        if (favorito == null || !favorito.Activo)
+        {
+            return NotFound(new { mensaje = $"Favorito con ID {id} no existe o ya fue eliminado." });
+        }
+
+        favorito.Activo = false;
+        favorito.EliminadoEn = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
 }
