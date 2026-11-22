@@ -104,6 +104,33 @@ builder.Services.AddAuthentication(options =>
         context.Identity?.AddClaim(new Claim("provider", "Twitter"));
         return Task.CompletedTask;
     };
+})
+.AddDiscord("Discord", options =>
+{
+    options.ClientId = GetConfig("DISCORD_CLIENT_ID", "Authentication:Discord:ClientId", "dummy-discord-client-id");
+    options.ClientSecret = GetConfig("DISCORD_CLIENT_SECRET", "Authentication:Discord:ClientSecret", "dummy-discord-client-secret");
+    options.CallbackPath = new PathString(GetConfig("DISCORD_CALLBACK_PATH", "Authentication:Discord:CallbackPath", "/signin-discord"));
+    options.Scope.Add("identify");
+    options.Scope.Add("email");
+    options.SaveTokens = true;
+    options.Events.OnCreatingTicket = context =>
+    {
+        context.Identity?.AddClaim(new Claim("provider", "Discord"));
+        return Task.CompletedTask;
+    };
+})
+.AddSpotify("Spotify", options =>
+{
+    options.ClientId = GetConfig("SPOTIFY_CLIENT_ID", "Authentication:Spotify:ClientId", "dummy-spotify-client-id");
+    options.ClientSecret = GetConfig("SPOTIFY_CLIENT_SECRET", "Authentication:Spotify:ClientSecret", "dummy-spotify-client-secret");
+    options.CallbackPath = new PathString(GetConfig("SPOTIFY_CALLBACK_PATH", "Authentication:Spotify:CallbackPath", "/signin-spotify"));
+    options.Scope.Add("user-read-email");
+    options.SaveTokens = true;
+    options.Events.OnCreatingTicket = context =>
+    {
+        context.Identity?.AddClaim(new Claim("provider", "Spotify"));
+        return Task.CompletedTask;
+    };
 });
 
 var app = builder.Build();
