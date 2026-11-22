@@ -97,12 +97,13 @@ public class ActoresController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var actor = await _context.Actores.FindAsync(id);
-        if (actor == null)
+        if (actor == null || !actor.Activo)
         {
-            return NotFound(new { mensaje = $"Actor con ID {id} no encontrado." });
+            return NotFound(new { mensaje = $"Actor con ID {id} no existe o ya no se encuentra activo." });
         }
 
-        _context.Actores.Remove(actor);
+        actor.Activo = false;
+        actor.EliminadoEn = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
         return NoContent();

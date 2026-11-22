@@ -134,12 +134,13 @@ public class ProductorasController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var productora = await _context.Productoras.FindAsync(id);
-        if (productora == null)
+        if (productora == null || !productora.Activo)
         {
-            return NotFound(new { mensaje = $"Productora con ID {id} no encontrada." });
+            return NotFound(new { mensaje = $"Productora con ID {id} no existe o ya no se encuentra activa." });
         }
 
-        _context.Productoras.Remove(productora);
+        productora.Activo = false;
+        productora.EliminadoEn = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
         return NoContent();

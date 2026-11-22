@@ -134,12 +134,13 @@ public class PlataformasController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var plataforma = await _context.Plataformas.FindAsync(id);
-        if (plataforma == null)
+        if (plataforma == null || !plataforma.Activo)
         {
-            return NotFound(new { mensaje = $"Plataforma con ID {id} no encontrada." });
+            return NotFound(new { mensaje = $"Plataforma con ID {id} no existe o ya no se encuentra activa." });
         }
 
-        _context.Plataformas.Remove(plataforma);
+        plataforma.Activo = false;
+        plataforma.EliminadoEn = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
         return NoContent();

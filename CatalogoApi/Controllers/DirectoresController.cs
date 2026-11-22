@@ -97,12 +97,13 @@ public class DirectoresController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var director = await _context.Directores.FindAsync(id);
-        if (director == null)
+        if (director == null || !director.Activo)
         {
-            return NotFound(new { mensaje = $"Director con ID {id} no encontrado." });
+            return NotFound(new { mensaje = $"Director con ID {id} no existe o ya no se encuentra activo." });
         }
 
-        _context.Directores.Remove(director);
+        director.Activo = false;
+        director.EliminadoEn = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
         return NoContent();
