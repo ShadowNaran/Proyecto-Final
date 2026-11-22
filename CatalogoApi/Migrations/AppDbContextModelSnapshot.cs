@@ -58,6 +58,42 @@ namespace CatalogoApi.Migrations
                     b.ToTable("actores");
                 });
 
+            modelBuilder.Entity("CatalogoApi.Models.Categoria", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("activo");
+
+                    b.Property<DateTime>("CreadoEn")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("creado_en");
+
+                    b.Property<string>("Descripcion")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("descripcion");
+
+                    b.Property<DateTime?>("EliminadoEn")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("eliminado_en");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("nombre");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("categorias");
+                });
+
             modelBuilder.Entity("CatalogoApi.Models.Director", b =>
                 {
                     b.Property<int>("Id")
@@ -97,6 +133,61 @@ namespace CatalogoApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("directores");
+                });
+
+            modelBuilder.Entity("CatalogoApi.Models.Pelicula", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("activo");
+
+                    b.Property<int>("AnioEstreno")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("anio_estreno");
+
+                    b.Property<int?>("CategoriaId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("categoria_id");
+
+                    b.Property<string>("Clasificacion")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("clasificacion");
+
+                    b.Property<DateTime>("CreadoEn")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("creado_en");
+
+                    b.Property<int>("DuracionMin")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("duracion_min");
+
+                    b.Property<DateTime?>("EliminadoEn")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("eliminado_en");
+
+                    b.Property<string>("PosterUrl")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("poster_url");
+
+                    b.Property<string>("Sinopsis")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("sinopsis");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("titulo");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoriaId");
+
+                    b.ToTable("peliculas");
                 });
 
             modelBuilder.Entity("CatalogoApi.Models.Plataforma", b =>
@@ -185,6 +276,147 @@ namespace CatalogoApi.Migrations
                         .IsUnique();
 
                     b.ToTable("productoras");
+                });
+
+            modelBuilder.Entity("CatalogoApi.Models.Serie", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("activo");
+
+                    b.Property<int>("AnioInicio")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("anio_inicio");
+
+                    b.Property<int?>("CategoriaId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("categoria_id");
+
+                    b.Property<DateTime>("CreadoEn")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("creado_en");
+
+                    b.Property<DateTime?>("EliminadoEn")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("eliminado_en");
+
+                    b.Property<bool>("EnEmision")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("en_emision");
+
+                    b.Property<string>("PosterUrl")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("poster_url");
+
+                    b.Property<string>("Sinopsis")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("sinopsis");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("titulo");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoriaId");
+
+                    b.ToTable("series");
+                });
+
+            modelBuilder.Entity("CatalogoApi.Models.Temporada", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("activo");
+
+                    b.Property<int>("AnioEstreno")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("anio_estreno");
+
+                    b.Property<int>("CantidadEpisodios")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("cantidad_episodios");
+
+                    b.Property<DateTime>("CreadoEn")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("creado_en");
+
+                    b.Property<DateTime?>("EliminadoEn")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("eliminado_en");
+
+                    b.Property<int>("Numero")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("numero");
+
+                    b.Property<int>("SerieId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("serie_id");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("titulo");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SerieId");
+
+                    b.ToTable("temporadas");
+                });
+
+            modelBuilder.Entity("CatalogoApi.Models.Pelicula", b =>
+                {
+                    b.HasOne("CatalogoApi.Models.Categoria", "Categoria")
+                        .WithMany("Peliculas")
+                        .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Categoria");
+                });
+
+            modelBuilder.Entity("CatalogoApi.Models.Serie", b =>
+                {
+                    b.HasOne("CatalogoApi.Models.Categoria", "Categoria")
+                        .WithMany("Series")
+                        .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Categoria");
+                });
+
+            modelBuilder.Entity("CatalogoApi.Models.Temporada", b =>
+                {
+                    b.HasOne("CatalogoApi.Models.Serie", "Serie")
+                        .WithMany("Temporadas")
+                        .HasForeignKey("SerieId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Serie");
+                });
+
+            modelBuilder.Entity("CatalogoApi.Models.Categoria", b =>
+                {
+                    b.Navigation("Peliculas");
+
+                    b.Navigation("Series");
+                });
+
+            modelBuilder.Entity("CatalogoApi.Models.Serie", b =>
+                {
+                    b.Navigation("Temporadas");
                 });
 #pragma warning restore 612, 618
         }
