@@ -460,7 +460,7 @@
     </main>
 
     <script>
-        const API_URL = (window.APP_CONFIG && window.APP_CONFIG.API_URL) || '';
+        const API_URL = ((window.APP_CONFIG && window.APP_CONFIG.API_URL) || '').replace(/\/+$/, '');
 
         function escapeHtml(value) {
             return String(value ?? '')

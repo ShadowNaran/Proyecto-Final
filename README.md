@@ -88,6 +88,27 @@ A diferencia de proveedores como Twitch o X —donde las aplicaciones pueden lee
 
 ---
 
+---
+
+## Entorno de Desarrollo con Docker Compose (Abraham Valeriano)
+
+El repositorio incluye un entorno containerizado completo con **PostgreSQL 17**, el **backend .NET 10** y el **frontend servido con Nginx**:
+
+- **`Dockerfile.AbrahamValeriano`**: Imagen multi-stage basada en `mcr.microsoft.com/dotnet/sdk:10.0` y `mcr.microsoft.com/dotnet/aspnet:10.0` que compila/publica `CatalogoApi` en modo `Release`, prepara `/app/keys` para Data Protection persistente con el usuario `app` y expone el puerto interno `8080`.
+- **Migraciones automáticas**: Al iniciar, `CatalogoApi` ejecuta `db.Database.Migrate()` con reintentos contra PostgreSQL para aplicar automáticamente el esquema inicial (`InitialPostgres`) sin intervención manual.
+- **Levantar el entorno completo**:
+  1. Copia `.env.example` a `.env` en la raíz del proyecto y completa las credenciales OAuth que necesites probar.
+  2. Ejecuta:
+     ```bash
+     docker compose -f docker-compose.dev.yml up --build
+     ```
+  3. Servicios disponibles por defecto:
+     - **Frontend (Nginx)**: `http://localhost:3000`
+     - **Backend API y Scalar**: `http://localhost:5174` / `http://localhost:5174/scalar/v1`
+     - **PostgreSQL**: `localhost:5433` (volumen persistente `pgdata`, red interna `catalogo_net`)
+
+---
+
 Flujo de trabajo y ejecucion
 
 Las reglas para hacer fork, nombrar ramas, escribir commits y abrir Pull Requests estan detalladas en CONTRIBUTING.md.

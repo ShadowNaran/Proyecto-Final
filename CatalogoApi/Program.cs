@@ -2,6 +2,7 @@ using CatalogoApi.Authentication;
 using CatalogoApi.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
@@ -78,13 +79,58 @@ var connectionString = GetConfig(
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// Configuración de autenticación con cookies y OAuth 2.0 (Twitch y X)
+// Data Protection persistente para mantener compatibilidad de cookies entre reinicios e instancias
+var defaultKeysPath = string.Equals(
+    Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"),
+    "true",
+    StringComparison.OrdinalIgnoreCase)
+    ? "/app/keys"
+    : "./keys";
+
+var keysPath = GetConfig("DATA_PROTECTION_KEYS_PATH", "DataProtection:KeysPath", defaultKeysPath);
+Directory.CreateDirectory(keysPath);
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
+    .SetApplicationName("CatalogoApi");
+
+// CORS para permitir peticiones con credenciales desde el frontend separado (Nginx)
+const string corsPolicyName = "FrontendCorsPolicy";
+var corsOriginsRaw = GetConfig(
+    "CORS_ORIGINS",
+    "Cors:AllowedOrigins",
+    "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5174,http://127.0.0.1:5174");
+var frontendUrlOrigin = GetConfig("FRONTEND_URL", "FrontendUrl", string.Empty);
+
+var allowedOrigins = corsOriginsRaw
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .Select(origin => origin.TrimEnd('/'))
+    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+if (Uri.TryCreate(frontendUrlOrigin, UriKind.Absolute, out var frontendUri))
+{
+    allowedOrigins.Add(frontendUri.GetLeftPart(UriPartial.Authority));
+}
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(corsPolicyName, policy =>
+    {
+        policy.WithOrigins(allowedOrigins.ToArray())
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
+// Configuración de autenticación con cookies y OAuth 2.0 (6 proveedores)
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
 .AddCookie(options =>
 {
+    options.Cookie.Name = "CatalogoApi.Auth";
     options.Cookie.SameSite = SameSiteMode.Lax;
     options.Cookie.HttpOnly = true;
 
@@ -324,6 +370,7 @@ app.UseHttpsRedirection();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+app.UseCors(corsPolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 

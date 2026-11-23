@@ -1,0 +1,66 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-catalogo_db}
+    ports:
+      - "${PG_HOST_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-catalogo_db}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - catalogo_net
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.AbrahamValeriano
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-5174}:8080"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DB_CONNECTION_STRING: Host=db;Port=5432;Database=${POSTGRES_DB:-catalogo_db};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      DATA_PROTECTION_KEYS_PATH: /app/keys
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:5174,http://127.0.0.1:5174}
+    volumes:
+      - dpkeys:/app/keys
+    networks:
+      - catalogo_net
+
+  frontend:
+    image: nginx:alpine
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    volumes:
+      - ./CatalogoApi/wwwroot/index.html:/usr/share/nginx/html/index.html:ro
+      - ./frontend/config.js:/usr/share/nginx/html/config.js:ro
+    networks:
+      - catalogo_net
+
+volumes:
+  pgdata:
+  dpkeys:
+
+networks:
+  catalogo_net:
+    driver: bridge
