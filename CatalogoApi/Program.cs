@@ -331,6 +331,14 @@ var allowedUsers = GetConfig("REPORTE_ALLOWED_USERS", "ReporteAbraham:AllowedUse
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
+var allowedMarcoProviders = GetConfig("REPORTE_MARCO_ALLOWED_PROVIDERS", "ReporteMarco:AllowedProviders", "Dropbox,Slack")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+var allowedMarcoUsers = GetConfig("REPORTE_MARCO_ALLOWED_USERS", "ReporteMarco:AllowedUsers", string.Empty)
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("ReporteAbrahamPolicy", policy =>
@@ -359,6 +367,41 @@ builder.Services.AddAuthorization(options =>
                 };
 
                 if (userIdentifiers.Any(u => !string.IsNullOrWhiteSpace(u) && allowedUsers.Contains(u)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+    });
+
+    options.AddPolicy("ReporteMarcoPolicy", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireAssertion(context =>
+        {
+            var provider = context.User.FindFirst("provider")?.Value;
+            if (!string.IsNullOrWhiteSpace(provider) && allowedMarcoProviders.Contains(provider))
+            {
+                return true;
+            }
+
+            if (allowedMarcoUsers.Count > 0)
+            {
+                var userIdentifiers = new[]
+                {
+                    context.User.FindFirst(ClaimTypes.Name)?.Value,
+                    context.User.FindFirst("name")?.Value,
+                    context.User.FindFirst("username")?.Value,
+                    context.User.FindFirst(ClaimTypes.Email)?.Value,
+                    context.User.FindFirst("email")?.Value,
+                    context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                    context.User.FindFirst("sub")?.Value,
+                    context.User.FindFirst("id")?.Value
+                };
+
+                if (userIdentifiers.Any(u => !string.IsNullOrWhiteSpace(u) && allowedMarcoUsers.Contains(u)))
                 {
                     return true;
                 }
