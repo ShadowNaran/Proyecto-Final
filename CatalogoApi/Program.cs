@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -234,10 +236,51 @@ builder.Services.AddAuthentication(options =>
     options.Scope.Add("identity.basic");
     options.Scope.Add("identity.email");
     options.SaveTokens = true;
-    options.Events.OnCreatingTicket = context =>
+    options.Events.OnCreatingTicket = async context =>
     {
         context.Identity?.AddClaim(new Claim("provider", "Slack"));
-        return Task.CompletedTask;
+
+        // En Slack OAuth v2, el user token viene en authed_user.access_token
+        string? userToken = context.AccessToken;
+        if (string.IsNullOrWhiteSpace(userToken) &&
+            context.TokenResponse?.Response?.RootElement.TryGetProperty("authed_user", out var authedUser) == true &&
+            authedUser.TryGetProperty("access_token", out var tokenProp))
+        {
+            userToken = tokenProp.GetString();
+        }
+
+        if (!string.IsNullOrWhiteSpace(userToken))
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Get, "https://slack.com/api/users.identity");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userToken);
+            using var res = await context.Backchannel.SendAsync(req, context.HttpContext.RequestAborted);
+            if (res.IsSuccessStatusCode)
+            {
+                using var doc = JsonDocument.Parse(await res.Content.ReadAsStringAsync(context.HttpContext.RequestAborted));
+                if (doc.RootElement.TryGetProperty("ok", out var okProp) && okProp.GetBoolean() &&
+                    doc.RootElement.TryGetProperty("user", out var userProp))
+                {
+                    var slackId = userProp.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    var slackName = userProp.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : null;
+                    var slackEmail = userProp.TryGetProperty("email", out var emailProp) ? emailProp.GetString() : null;
+
+                    if (context.Identity != null)
+                    {
+                        foreach (var old in context.Identity.FindAll(ClaimTypes.NameIdentifier).ToList())
+                            context.Identity.RemoveClaim(old);
+                        foreach (var old in context.Identity.FindAll(ClaimTypes.Name).ToList())
+                            context.Identity.RemoveClaim(old);
+
+                        if (!string.IsNullOrWhiteSpace(slackId))
+                            context.Identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, slackId));
+                        if (!string.IsNullOrWhiteSpace(slackName))
+                            context.Identity.AddClaim(new Claim(ClaimTypes.Name, slackName));
+                        if (!string.IsNullOrWhiteSpace(slackEmail))
+                            context.Identity.AddClaim(new Claim(ClaimTypes.Email, slackEmail));
+                    }
+                }
+            }
+        }
     };
 })
 .AddTikTok("TikTok", options =>
