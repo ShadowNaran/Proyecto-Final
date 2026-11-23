@@ -51,6 +51,13 @@ public class AuthController : ControllerBase
         return Challenge(properties, "Slack");
     }
 
+    [HttpGet("login/tiktok")]
+    public IActionResult LoginTikTok()
+    {
+        var properties = new AuthenticationProperties { RedirectUri = "/" };
+        return Challenge(properties, "TikTok");
+    }
+
     [HttpGet("me")]
     public IActionResult GetMe()
     {

@@ -1,3 +1,4 @@
+using CatalogoApi.Authentication;
 using CatalogoApi.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -58,6 +59,19 @@ string GetConfig(string envVar, string configPath, string fallback)
     val = builder.Configuration[configPath];
     if (!string.IsNullOrWhiteSpace(val)) return val;
     return fallback;
+}
+
+// TIKTOK_CALLBACK_URL puede venir como URL completa o solo como ruta.
+// El host real lo calcula el handler desde la petición (con ForwardedHeaders).
+string NormalizeCallbackPath(string value)
+{
+    if (Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+        (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+    {
+        return uri.AbsolutePath;
+    }
+
+    return value.StartsWith('/') ? value : "/" + value;
 }
 
 // Configuración de autenticación con cookies y OAuth 2.0 (Twitch y X)
@@ -174,6 +188,45 @@ builder.Services.AddAuthentication(options =>
     {
         context.Identity?.AddClaim(new Claim("provider", "Slack"));
         return Task.CompletedTask;
+    };
+})
+.AddTikTok("TikTok", options =>
+{
+    var tiktokCallbackUrl = GetConfig("TIKTOK_CALLBACK_URL", "Authentication:TikTok:CallbackUrl", "/signin-tiktok");
+
+    options.ClientId = GetConfig("TIKTOK_CLIENT_KEY", "Authentication:TikTok:ClientKey", "dummy-tiktok-client-key");
+    options.ClientSecret = GetConfig("TIKTOK_CLIENT_SECRET", "Authentication:TikTok:ClientSecret", "dummy-tiktok-client-secret");
+    options.CallbackPath = new PathString(NormalizeCallbackPath(tiktokCallbackUrl));
+    options.CallbackUrl = Uri.TryCreate(tiktokCallbackUrl, UriKind.Absolute, out var callbackUri) &&
+                          (callbackUri.Scheme == Uri.UriSchemeHttp || callbackUri.Scheme == Uri.UriSchemeHttps)
+        ? callbackUri.AbsoluteUri
+        : null;
+    options.AllowedOpenId = GetConfig("ALLOWED_TIKTOK_OPEN_ID", "Authentication:TikTok:AllowedOpenId", string.Empty);
+    options.SaveTokens = true;
+    options.Events.OnCreatingTicket = context =>
+    {
+        context.Identity?.AddClaim(new Claim("provider", "TikTok"));
+        return Task.CompletedTask;
+    };
+    options.Events.OnRemoteFailure = async context =>
+    {
+        if (context.Failure is TikTokAccessDeniedException denied)
+        {
+            // Si ya existía una sesión de TikTok para ese mismo open_id, se invalida.
+            var currentOpenId = context.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (context.HttpContext.User.HasClaim("provider", "TikTok") &&
+                string.Equals(currentOpenId, denied.OpenId, StringComparison.Ordinal))
+            {
+                await context.HttpContext.SignOutAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme);
+            }
+
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            context.Response.ContentType = "application/json; charset=utf-8";
+            await context.Response.WriteAsync(
+                "{\"error\":\"Acceso denegado\",\"detalle\":\"La cuenta de TikTok no está autorizada para iniciar sesión.\"}");
+            context.HandleResponse();
+        }
     };
 });
 
