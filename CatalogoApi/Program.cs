@@ -47,11 +47,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? "Data Source=catalogo.db";
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(connectionString));
-
-// Helper para obtener configuración con prioridad: variable de entorno -> IConfiguration -> dummy
+// Helper para obtener configuración con prioridad: variable de entorno -> IConfiguration -> fallback
 string GetConfig(string envVar, string configPath, string fallback)
 {
     var val = Environment.GetEnvironmentVariable(envVar);
@@ -73,6 +69,14 @@ string NormalizeCallbackPath(string value)
 
     return value.StartsWith('/') ? value : "/" + value;
 }
+
+var connectionString = GetConfig(
+    "DB_CONNECTION_STRING",
+    "ConnectionStrings:DefaultConnection",
+    "Host=localhost;Port=5432;Database=catalogo_db;Username=postgres;Password=postgres");
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString));
 
 // Configuración de autenticación con cookies y OAuth 2.0 (Twitch y X)
 builder.Services.AddAuthentication(options =>
@@ -230,18 +234,83 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+var allowedProviders = GetConfig("REPORTE_ALLOWED_PROVIDERS", "ReporteAbraham:AllowedProviders", "Discord,Spotify")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+var allowedUsers = GetConfig("REPORTE_ALLOWED_USERS", "ReporteAbraham:AllowedUsers", string.Empty)
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("ReporteAbrahamPolicy", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireAssertion(context =>
+        {
+            var provider = context.User.FindFirst("provider")?.Value;
+            if (!string.IsNullOrWhiteSpace(provider) && allowedProviders.Contains(provider))
+            {
+                return true;
+            }
+
+            if (allowedUsers.Count > 0)
+            {
+                var userIdentifiers = new[]
+                {
+                    context.User.FindFirst(ClaimTypes.Name)?.Value,
+                    context.User.FindFirst("name")?.Value,
+                    context.User.FindFirst("username")?.Value,
+                    context.User.FindFirst(ClaimTypes.Email)?.Value,
+                    context.User.FindFirst("email")?.Value,
+                    context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                    context.User.FindFirst("sub")?.Value,
+                    context.User.FindFirst("id")?.Value
+                };
+
+                if (userIdentifiers.Any(u => !string.IsNullOrWhiteSpace(u) && allowedUsers.Contains(u)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+    });
+});
+
 var app = builder.Build();
 
 // Debe ejecutarse antes de cualquier middleware que dependa del esquema/IP real
 // (HTTPS redirection, cookies, autenticacion) para reconocer el proxy de Render.
 app.UseForwardedHeaders();
 
-// Crea la base SQLite y aplica las migraciones pendientes al arrancar.
-// En Render el sistema de archivos es efimero salvo que se monte un disco persistente.
+// Aplica las migraciones pendientes en PostgreSQL al arrancar, con reintentos
+// por si el servicio de base de datos tarda unos segundos en aceptar conexiones.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    const int maxIntentos = 5;
+
+    for (var intento = 1; intento <= maxIntentos; intento++)
+    {
+        try
+        {
+            db.Database.Migrate();
+            break;
+        }
+        catch (Exception ex) when (intento < maxIntentos)
+        {
+            logger.LogWarning(
+                ex,
+                "No se pudo conectar a PostgreSQL para aplicar migraciones (intento {Intento}/{MaxIntentos}). Reintentando en 2 segundos...",
+                intento,
+                maxIntentos);
+            Thread.Sleep(TimeSpan.FromSeconds(2));
+        }
+    }
 }
 
 // Configure the HTTP request pipeline.
