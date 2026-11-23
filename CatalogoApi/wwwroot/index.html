@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catálogo Audiovisual API</title>
+    <script src="/config.js" onerror="window.APP_CONFIG = window.APP_CONFIG || {};"></script>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -26,12 +27,15 @@
             --slack-hover: #3b103c;
             --danger: #ef4444;
             --danger-hover: #dc2626;
+            --warning-bg: #78350f;
+            --warning-text: #fde68a;
+            --error-bg: #7f1d1d;
+            --error-text: #fecaca;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --border-color: #334155;
             --success-bg: #064e3b;
             --success-text: #6ee7b7;
-            
         }
 
         * {
@@ -56,7 +60,7 @@
             border: 1px solid var(--border-color);
             border-radius: 14px;
             padding: 2.5rem;
-            max-width: 650px;
+            max-width: 820px;
             width: 100%;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
             text-align: center;
@@ -102,6 +106,13 @@
 
         .btn:active {
             transform: translateY(0);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
         }
 
         .btn-scalar {
@@ -175,13 +186,20 @@
             text-align: center;
         }
 
+        .section-actions {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
         .oauth-buttons {
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
         }
 
-        .session-info {
+        .session-info,
+        .result-box {
             background-color: rgba(15, 23, 42, 0.6);
             border: 1px solid var(--border-color);
             border-radius: 8px;
@@ -194,6 +212,7 @@
         .session-row {
             display: flex;
             justify-content: space-between;
+            gap: 1rem;
             font-size: 0.95rem;
         }
 
@@ -204,6 +223,16 @@
         .session-value {
             font-weight: 600;
             color: var(--text-main);
+            text-align: right;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            align-self: center;
         }
 
         .badge-active {
@@ -215,6 +244,105 @@
             font-size: 0.8rem;
             font-weight: 600;
             align-self: center;
+        }
+
+        .badge-error {
+            background-color: var(--error-bg);
+            color: var(--error-text);
+        }
+
+        .badge-warning {
+            background-color: var(--warning-bg);
+            color: var(--warning-text);
+        }
+
+        .status-note {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.45;
+            text-align: center;
+        }
+
+        .report-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        .report-meta strong {
+            color: var(--text-main);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .metric-card {
+            background-color: rgba(30, 41, 59, 0.85);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.85rem 0.75rem;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .metric-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+
+        .report-table th,
+        .report-table td {
+            padding: 0.65rem 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .report-table th {
+            background-color: rgba(30, 41, 59, 0.9);
+            color: var(--text-muted);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .report-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .report-table td.num,
+        .report-table th.num {
+            text-align: center;
+        }
+
+        .titles-list {
+            color: var(--text-muted);
+            font-size: 0.84rem;
+            line-height: 1.4;
         }
     </style>
 </head>
@@ -231,37 +359,37 @@
         <section class="section-box" id="oauth-container">
             <h2 class="section-title">Autenticación OAuth 2.0</h2>
             <div class="oauth-buttons">
-                <a href="/api/auth/login/twitch" class="btn btn-twitch" id="btn-login-twitch">
+                <a href="/api/auth/login/twitch" class="btn btn-twitch" id="btn-login-twitch" data-api-path="/api/auth/login/twitch">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>
                     </svg>
                     Iniciar sesión con Twitch
                 </a>
-                <a href="/api/auth/login/twitter" class="btn btn-twitter" id="btn-login-twitter">
+                <a href="/api/auth/login/twitter" class="btn btn-twitter" id="btn-login-twitter" data-api-path="/api/auth/login/twitter">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                     </svg>
                     Iniciar sesión con X
                 </a>
-                <a href="/api/auth/login/discord" class="btn btn-discord" id="btn-login-discord">
+                <a href="/api/auth/login/discord" class="btn btn-discord" id="btn-login-discord" data-api-path="/api/auth/login/discord">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028z"/>
                     </svg>
                     Iniciar sesión con Discord
                 </a>
-                <a href="/api/auth/login/spotify" class="btn btn-spotify" id="btn-login-spotify">
+                <a href="/api/auth/login/spotify" class="btn btn-spotify" id="btn-login-spotify" data-api-path="/api/auth/login/spotify">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.72 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
                     </svg>
                     Iniciar sesión con Spotify
                 </a>
-                <a href="/api/auth/login/dropbox" class="btn btn-dropbox" id="btn-login-dropbox">
+                <a href="/api/auth/login/dropbox" class="btn btn-dropbox" id="btn-login-dropbox" data-api-path="/api/auth/login/dropbox">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M6 2L0 6l6 4-6 4 6 4 6-4-6-4 6-4-6-4zm12 0l-6 4 6 4-6 4 6 4 6-4-6-4 6-4-6-4zM6 19l6 4 6-4-6-4-6 4z"/>
                     </svg>
                     Iniciar sesión con Dropbox
                 </a>
-                <a href="/api/auth/login/slack" class="btn btn-slack" id="btn-login-slack">
+                <a href="/api/auth/login/slack" class="btn btn-slack" id="btn-login-slack" data-api-path="/api/auth/login/slack">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
                     </svg>
@@ -277,14 +405,67 @@
                 <p style="color: var(--text-muted); text-align: center;">Cargando estado...</p>
             </div>
         </section>
+
+        <!-- Prueba de recurso protegido -->
+        <section class="section-box" id="protected-test-container">
+            <h2 class="section-title">Prueba de Recurso Protegido</h2>
+            <div class="section-actions">
+                <button type="button" class="btn btn-primary" id="btn-test-protected" onclick="testProtectedResource()">
+                    Probar GET /api/peliculas
+                </button>
+            </div>
+            <div id="protected-test-result">
+                <p class="status-note">Pulsa el botón para comprobar si la sesión actual tiene acceso (200 OK) o si fue rechazada tras cerrar sesión (401 Unauthorized).</p>
+            </div>
+        </section>
+
+        <!-- Reporte Autorizado — Catálogo (Abraham Valeriano) -->
+        <section class="section-box" id="reporte-abraham-container">
+            <h2 class="section-title">Reporte Autorizado — Catálogo (Abraham Valeriano)</h2>
+            <div class="section-actions">
+                <button type="button" class="btn btn-scalar" id="btn-load-reporte" onclick="loadReporteAbraham()">
+                    Consultar Reporte /api/reportes/catalogo-abraham
+                </button>
+            </div>
+            <div id="reporte-abraham-result">
+                <p class="status-note">Combina categorías, películas, series y temporadas activas. Requiere sesión con proveedor/usuario autorizado.</p>
+            </div>
+        </section>
     </main>
 
     <script>
+        const API_URL = (window.APP_CONFIG && window.APP_CONFIG.API_URL) || '';
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function configureApiLinks() {
+            if (!API_URL) return;
+            const scalarLink = document.getElementById('scalar-link');
+            if (scalarLink) {
+                scalarLink.href = `${API_URL}/scalar/v1`;
+            }
+            document.querySelectorAll('[data-api-path]').forEach(link => {
+                const path = link.getAttribute('data-api-path');
+                if (path) {
+                    link.href = `${API_URL}${path}`;
+                }
+            });
+        }
+
         async function loadSessionStatus() {
             const sessionContent = document.getElementById('session-content');
 
             try {
-                const response = await fetch('/api/auth/me');
+                const response = await fetch(`${API_URL}/api/auth/me`, {
+                    credentials: 'include'
+                });
                 if (!response.ok) {
                     throw new Error('Error al consultar el estado de sesión');
                 }
@@ -297,15 +478,15 @@
                             <span class="badge-active">Sesión Activa</span>
                             <div class="session-row">
                                 <span class="session-label">Proveedor:</span>
-                                <span class="session-value">${data.proveedor}</span>
+                                <span class="session-value">${escapeHtml(data.proveedor)}</span>
                             </div>
                             <div class="session-row">
                                 <span class="session-label">Usuario:</span>
-                                <span class="session-value">${data.usuario || '(sin nombre)'}</span>
+                                <span class="session-value">${escapeHtml(data.usuario || '(sin nombre)')}</span>
                             </div>
                             <div class="session-row">
                                 <span class="session-label">ID Proveedor:</span>
-                                <span class="session-value">${data.id || '(no disponible)'}</span>
+                                <span class="session-value">${escapeHtml(data.id || '(no disponible)')}</span>
                             </div>
                             <button class="btn btn-danger" style="margin-top: 0.5rem;" onclick="logout()">Cerrar sesión</button>
                         </div>
@@ -325,7 +506,10 @@
 
         async function logout() {
             try {
-                const response = await fetch('/api/auth/logout', { method: 'POST' });
+                const response = await fetch(`${API_URL}/api/auth/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
                 if (response.ok) {
                     await loadSessionStatus();
                 } else {
@@ -337,7 +521,185 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', loadSessionStatus);
+        async function testProtectedResource() {
+            const resultContainer = document.getElementById('protected-test-result');
+            resultContainer.innerHTML = `<p class="status-note">Consultando ${escapeHtml(API_URL)}/api/peliculas...</p>`;
+
+            try {
+                const response = await fetch(`${API_URL}/api/peliculas`, {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const peliculas = await response.json();
+                    const total = Array.isArray(peliculas) ? peliculas.length : 0;
+                    resultContainer.innerHTML = `
+                        <div class="result-box">
+                            <span class="badge badge-active">HTTP ${response.status} OK</span>
+                            <p class="status-note">Acceso concedido al recurso protegido. Se obtuvieron <strong>${total}</strong> películas activas.</p>
+                        </div>
+                    `;
+                } else if (response.status === 401) {
+                    resultContainer.innerHTML = `
+                        <div class="result-box">
+                            <span class="badge badge-error">HTTP 401 Unauthorized</span>
+                            <p class="status-note">Acceso denegado: no existe una sesión autenticada activa (comportamiento esperado sin login o tras cerrar sesión).</p>
+                        </div>
+                    `;
+                } else {
+                    resultContainer.innerHTML = `
+                        <div class="result-box">
+                            <span class="badge badge-warning">HTTP ${response.status} ${escapeHtml(response.statusText || '')}</span>
+                            <p class="status-note">La API respondió con un estado inesperado al consultar el recurso protegido.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error al probar recurso protegido:', error);
+                resultContainer.innerHTML = `
+                    <div class="result-box">
+                        <span class="badge badge-error">Error de red</span>
+                        <p class="status-note">No se pudo completar la petición hacia /api/peliculas.</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadReporteAbraham() {
+            const resultContainer = document.getElementById('reporte-abraham-result');
+            resultContainer.innerHTML = `<p class="status-note">Consultando reporte autorizado...</p>`;
+
+            try {
+                const response = await fetch(`${API_URL}/api/reportes/catalogo-abraham`, {
+                    credentials: 'include'
+                });
+
+                if (response.status === 401) {
+                    resultContainer.innerHTML = `
+                        <div class="result-box">
+                            <span class="badge badge-error">HTTP 401 Unauthorized — Sin sesión</span>
+                            <p class="status-note">No has iniciado sesión. Autentícate con un proveedor OAuth autorizado para consultar el reporte.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (response.status === 403) {
+                    resultContainer.innerHTML = `
+                        <div class="result-box">
+                            <span class="badge badge-warning">HTTP 403 Forbidden — Sin permisos</span>
+                            <p class="status-note">Tienes una sesión activa, pero tu proveedor o usuario no está autorizado por la política del reporte en el backend.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (!response.ok) {
+                    resultContainer.innerHTML = `
+                        <div class="result-box">
+                            <span class="badge badge-error">HTTP ${response.status} ${escapeHtml(response.statusText || '')}</span>
+                            <p class="status-note">No se pudo generar el reporte del catálogo.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const data = await response.json();
+                const resumen = data.resumen || {};
+                const desglose = Array.isArray(data.desglosePorCategoria) ? data.desglosePorCategoria : [];
+                const tablas = Array.isArray(data.tablas) ? data.tablas.join(', ') : '';
+                const generadoEn = data.generadoEn ? new Date(data.generadoEn).toLocaleString() : '';
+
+                const rowsHtml = desglose.length > 0
+                    ? desglose.map(item => {
+                        const titulos = Array.isArray(item.titulos) && item.titulos.length > 0
+                            ? escapeHtml(item.titulos.join(', '))
+                            : '<em>Sin títulos registrados</em>';
+
+                        return `
+                            <tr>
+                                <td><strong>${escapeHtml(item.nombreCategoria)}</strong></td>
+                                <td class="num">${escapeHtml(item.cantidadPeliculas)}</td>
+                                <td class="num">${escapeHtml(item.cantidadSeries)}</td>
+                                <td class="num">${escapeHtml(item.totalTemporadas)}</td>
+                                <td class="num">${escapeHtml(item.totalEpisodios)}</td>
+                                <td class="titles-list">${titulos}</td>
+                            </tr>
+                        `;
+                    }).join('')
+                    : `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No hay categorías o títulos activos registrados todavía.</td></tr>`;
+
+                resultContainer.innerHTML = `
+                    <div class="result-box">
+                        <span class="badge badge-active">HTTP 200 OK — Acceso Autorizado</span>
+                        <div class="report-meta">
+                            <div><strong>Autor:</strong> ${escapeHtml(data.autor)}</div>
+                            <div><strong>Propósito:</strong> ${escapeHtml(data.proposito)}</div>
+                            <div><strong>Tablas consultadas:</strong> ${escapeHtml(tablas)}</div>
+                            <div><strong>Generado en:</strong> ${escapeHtml(generadoEn)}</div>
+                        </div>
+
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-value">${escapeHtml(resumen.totalCategorias ?? 0)}</div>
+                                <div class="metric-label">Categorías</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${escapeHtml(resumen.totalPeliculas ?? 0)}</div>
+                                <div class="metric-label">Películas</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${escapeHtml(resumen.totalSeries ?? 0)}</div>
+                                <div class="metric-label">Series</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${escapeHtml(resumen.totalTemporadas ?? 0)}</div>
+                                <div class="metric-label">Temporadas</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${escapeHtml(resumen.totalEpisodios ?? 0)}</div>
+                                <div class="metric-label">Episodios</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${escapeHtml(resumen.duracionPromedioPeliculasMin ?? 0)} min</div>
+                                <div class="metric-label">Duración prom.</div>
+                            </div>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table class="report-table">
+                                <thead>
+                                    <tr>
+                                        <th>Categoría</th>
+                                        <th class="num">Películas</th>
+                                        <th class="num">Series</th>
+                                        <th class="num">Temporadas</th>
+                                        <th class="num">Episodios</th>
+                                        <th>Títulos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rowsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error al cargar el reporte:', error);
+                resultContainer.innerHTML = `
+                    <div class="result-box">
+                        <span class="badge badge-error">Error de red</span>
+                        <p class="status-note">No se pudo conectar con /api/reportes/catalogo-abraham.</p>
+                    </div>
+                `;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            configureApiLinks();
+            loadSessionStatus();
+        });
     </script>
 </body>
 </html>

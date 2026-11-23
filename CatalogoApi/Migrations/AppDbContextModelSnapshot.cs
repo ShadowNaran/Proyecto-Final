@@ -4,6 +4,7 @@ using CatalogoApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -15,42 +16,48 @@ namespace CatalogoApi.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.14");
+            modelBuilder
+                .HasAnnotation("ProductVersion", "10.0.14")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("CatalogoApi.Models.Actor", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<bool>("Activo")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasColumnName("activo");
 
                     b.Property<string>("Biografia")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("biografia");
 
                     b.Property<DateTime>("CreadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("creado_en");
 
                     b.Property<DateTime?>("EliminadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("eliminado_en");
 
                     b.Property<DateTime?>("FechaNacimiento")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("fecha_nacimiento");
 
                     b.Property<string>("Nacionalidad")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("nacionalidad");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("nombre");
 
                     b.HasKey("Id");
@@ -62,28 +69,30 @@ namespace CatalogoApi.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<bool>("Activo")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasColumnName("activo");
 
                     b.Property<DateTime>("CreadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("creado_en");
 
                     b.Property<string>("Descripcion")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("descripcion");
 
                     b.Property<DateTime?>("EliminadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("eliminado_en");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("nombre");
 
                     b.HasKey("Id");
@@ -98,36 +107,38 @@ namespace CatalogoApi.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<bool>("Activo")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasColumnName("activo");
 
                     b.Property<string>("Biografia")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("biografia");
 
                     b.Property<DateTime>("CreadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("creado_en");
 
                     b.Property<DateTime?>("EliminadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("eliminado_en");
 
                     b.Property<DateTime?>("FechaNacimiento")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("fecha_nacimiento");
 
                     b.Property<string>("Nacionalidad")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("nacionalidad");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("nombre");
 
                     b.HasKey("Id");
@@ -139,38 +150,40 @@ namespace CatalogoApi.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<bool>("Activo")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasColumnName("activo");
 
                     b.Property<DateTime>("CreadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("creado_en");
 
                     b.Property<DateTime?>("EliminadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("eliminado_en");
 
                     b.Property<string>("NotaPersonal")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("nota_personal");
 
                     b.Property<string>("TipoContenido")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("tipo_contenido");
 
                     b.Property<string>("TituloObra")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("titulo_obra");
 
                     b.Property<string>("UsuarioEmail")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("usuario_email");
 
                     b.HasKey("Id");
@@ -182,37 +195,39 @@ namespace CatalogoApi.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<bool>("Activo")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasColumnName("activo");
 
                     b.Property<DateTime>("CreadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("creado_en");
 
                     b.Property<string>("Descripcion")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("descripcion");
 
                     b.Property<DateTime?>("EliminadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("eliminado_en");
 
                     b.Property<bool>("EsPublica")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasColumnName("es_publica");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("nombre");
 
                     b.Property<string>("Propietario")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("propietario");
 
                     b.HasKey("Id");
@@ -224,48 +239,50 @@ namespace CatalogoApi.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<bool>("Activo")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasColumnName("activo");
 
                     b.Property<int>("AnioEstreno")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("anio_estreno");
 
                     b.Property<int?>("CategoriaId")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("categoria_id");
 
                     b.Property<string>("Clasificacion")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("clasificacion");
 
                     b.Property<DateTime>("CreadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("creado_en");
 
                     b.Property<int>("DuracionMin")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("duracion_min");
 
                     b.Property<DateTime?>("EliminadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("eliminado_en");
 
                     b.Property<string>("PosterUrl")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("poster_url");
 
                     b.Property<string>("Sinopsis")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("sinopsis");
 
                     b.Property<string>("Titulo")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("titulo");
 
                     b.HasKey("Id");
@@ -279,36 +296,38 @@ namespace CatalogoApi.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<bool>("Activo")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasColumnName("activo");
 
                     b.Property<DateTime>("CreadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("creado_en");
 
                     b.Property<DateTime?>("EliminadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("eliminado_en");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("nombre");
 
                     b.Property<string>("PaisDisponible")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("pais_disponible");
 
                     b.Property<decimal?>("PrecioMensual")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("numeric")
                         .HasColumnName("precio_mensual");
 
                     b.Property<string>("SitioWeb")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("sitio_web");
 
                     b.HasKey("Id");
@@ -323,38 +342,40 @@ namespace CatalogoApi.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<bool>("Activo")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasColumnName("activo");
 
                     b.Property<int>("Anio")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("anio");
 
                     b.Property<string>("CategoriaPremio")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("categoria_premio");
 
                     b.Property<DateTime>("CreadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("creado_en");
 
                     b.Property<DateTime?>("EliminadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("eliminado_en");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("nombre");
 
                     b.Property<string>("ObraGanadora")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("obra_ganadora");
 
                     b.HasKey("Id");
@@ -366,36 +387,38 @@ namespace CatalogoApi.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<bool>("Activo")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasColumnName("activo");
 
                     b.Property<int?>("AnioFundacion")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("anio_fundacion");
 
                     b.Property<DateTime>("CreadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("creado_en");
 
                     b.Property<DateTime?>("EliminadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("eliminado_en");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("nombre");
 
                     b.Property<string>("Pais")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("pais");
 
                     b.Property<string>("SitioWeb")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("sitio_web");
 
                     b.HasKey("Id");
@@ -410,42 +433,44 @@ namespace CatalogoApi.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<bool>("Activo")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasColumnName("activo");
 
                     b.Property<string>("Autor")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("autor");
 
                     b.Property<string>("Comentario")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("comentario");
 
                     b.Property<DateTime>("CreadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("creado_en");
 
                     b.Property<DateTime?>("EliminadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("eliminado_en");
 
                     b.Property<int>("Puntuacion")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("puntuacion");
 
                     b.Property<string>("TipoContenido")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("tipo_contenido");
 
                     b.Property<string>("TituloObra")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("titulo_obra");
 
                     b.HasKey("Id");
@@ -457,44 +482,46 @@ namespace CatalogoApi.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<bool>("Activo")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasColumnName("activo");
 
                     b.Property<int>("AnioInicio")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("anio_inicio");
 
                     b.Property<int?>("CategoriaId")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("categoria_id");
 
                     b.Property<DateTime>("CreadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("creado_en");
 
                     b.Property<DateTime?>("EliminadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("eliminado_en");
 
                     b.Property<bool>("EnEmision")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasColumnName("en_emision");
 
                     b.Property<string>("PosterUrl")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("poster_url");
 
                     b.Property<string>("Sinopsis")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("sinopsis");
 
                     b.Property<string>("Titulo")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("titulo");
 
                     b.HasKey("Id");
@@ -508,40 +535,42 @@ namespace CatalogoApi.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<bool>("Activo")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasColumnName("activo");
 
                     b.Property<int>("AnioEstreno")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("anio_estreno");
 
                     b.Property<int>("CantidadEpisodios")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("cantidad_episodios");
 
                     b.Property<DateTime>("CreadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("creado_en");
 
                     b.Property<DateTime?>("EliminadoEn")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("eliminado_en");
 
                     b.Property<int>("Numero")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("numero");
 
                     b.Property<int>("SerieId")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("serie_id");
 
                     b.Property<string>("Titulo")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("titulo");
 
                     b.HasKey("Id");
