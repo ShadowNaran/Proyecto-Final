@@ -60,4 +60,51 @@ public class PremiosController : ControllerBase
 
         return CreatedAtAction(nameof(GetById), new { id = premio.Id }, premio);
     }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, [FromBody] Premio premio)
+    {
+        if (id != premio.Id)
+        {
+            return BadRequest(new { mensaje = "El ID de la ruta no coincide con el ID del cuerpo." });
+        }
+
+        if (string.IsNullOrWhiteSpace(premio.Nombre) ||
+            string.IsNullOrWhiteSpace(premio.CategoriaPremio) ||
+            string.IsNullOrWhiteSpace(premio.ObraGanadora))
+        {
+            return BadRequest(new { mensaje = "nombre, categoria_premio y obra_ganadora son obligatorios." });
+        }
+
+        var existing = await _context.Premios.FindAsync(id);
+        if (existing == null || !existing.Activo)
+        {
+            return NotFound(new { mensaje = $"Premio con ID {id} no existe o no se encuentra activo." });
+        }
+
+        existing.Nombre = premio.Nombre;
+        existing.CategoriaPremio = premio.CategoriaPremio;
+        existing.Anio = premio.Anio;
+        existing.ObraGanadora = premio.ObraGanadora;
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var premio = await _context.Premios.FindAsync(id);
+        if (premio == null || !premio.Activo)
+        {
+            return NotFound(new { mensaje = $"Premio con ID {id} no existe o ya fue eliminado." });
+        }
+
+        premio.Activo = false;
+        premio.EliminadoEn = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
 }

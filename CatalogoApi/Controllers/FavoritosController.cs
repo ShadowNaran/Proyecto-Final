@@ -60,4 +60,51 @@ public class FavoritosController : ControllerBase
 
         return CreatedAtAction(nameof(GetById), new { id = favorito.Id }, favorito);
     }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, [FromBody] Favorito favorito)
+    {
+        if (id != favorito.Id)
+        {
+            return BadRequest(new { mensaje = "El ID de la ruta no coincide con el ID del cuerpo." });
+        }
+
+        if (string.IsNullOrWhiteSpace(favorito.UsuarioEmail) ||
+            string.IsNullOrWhiteSpace(favorito.TipoContenido) ||
+            string.IsNullOrWhiteSpace(favorito.TituloObra))
+        {
+            return BadRequest(new { mensaje = "usuario_email, tipo_contenido y titulo_obra son obligatorios." });
+        }
+
+        var existing = await _context.Favoritos.FindAsync(id);
+        if (existing == null || !existing.Activo)
+        {
+            return NotFound(new { mensaje = $"Favorito con ID {id} no existe o no se encuentra activo." });
+        }
+
+        existing.UsuarioEmail = favorito.UsuarioEmail;
+        existing.TipoContenido = favorito.TipoContenido;
+        existing.TituloObra = favorito.TituloObra;
+        existing.NotaPersonal = favorito.NotaPersonal;
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var favorito = await _context.Favoritos.FindAsync(id);
+        if (favorito == null || !favorito.Activo)
+        {
+            return NotFound(new { mensaje = $"Favorito con ID {id} no existe o ya fue eliminado." });
+        }
+
+        favorito.Activo = false;
+        favorito.EliminadoEn = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
 }

@@ -59,4 +59,50 @@ public class ListasReproduccionController : ControllerBase
 
         return CreatedAtAction(nameof(GetById), new { id = lista.Id }, lista);
     }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, [FromBody] ListaReproduccion lista)
+    {
+        if (id != lista.Id)
+        {
+            return BadRequest(new { mensaje = "El ID de la ruta no coincide con el ID del cuerpo." });
+        }
+
+        if (string.IsNullOrWhiteSpace(lista.Nombre) ||
+            string.IsNullOrWhiteSpace(lista.Propietario))
+        {
+            return BadRequest(new { mensaje = "El nombre y el propietario son obligatorios." });
+        }
+
+        var existing = await _context.ListasReproduccion.FindAsync(id);
+        if (existing == null || !existing.Activo)
+        {
+            return NotFound(new { mensaje = $"Lista de reproducción con ID {id} no existe o no se encuentra activa." });
+        }
+
+        existing.Nombre = lista.Nombre;
+        existing.Descripcion = lista.Descripcion;
+        existing.EsPublica = lista.EsPublica;
+        existing.Propietario = lista.Propietario;
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var lista = await _context.ListasReproduccion.FindAsync(id);
+        if (lista == null || !lista.Activo)
+        {
+            return NotFound(new { mensaje = $"Lista de reproducción con ID {id} no existe o ya fue eliminada." });
+        }
+
+        lista.Activo = false;
+        lista.EliminadoEn = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
 }
