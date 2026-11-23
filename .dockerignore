@@ -1,0 +1,26 @@
+# Control de versiones y metadatos del IDE
+.git
+.gitignore
+.vs
+.vscode
+.idea
+
+# Artefactos de compilacion locales
+**/bin
+**/obj
+
+# Secretos y configuracion local (nunca deben entrar a la imagen)
+**/.env
+**/appsettings.Development.json
+**/appsettings.Local.json
+
+# Base de datos SQLite local (se crea en tiempo de ejecucion)
+**/*.db
+**/*.db-shm
+**/*.db-wal
+
+# Documentacion y archivos del propio Docker
+Dockerfile
+.dockerignore
+README.md
+CONTRIBUTING.md

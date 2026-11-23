@@ -1,6 +1,7 @@
 using CatalogoApi.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using System.Security.Claims;
@@ -35,6 +36,15 @@ builder.Services.AddControllers()
     });
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
+
+// Render termina TLS en su proxy y envia X-Forwarded-Proto / X-Forwarded-For.
+// Se limpian las redes conocidas porque las IPs del proxy de Render son dinamicas.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? "Data Source=catalogo.db";
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -168,6 +178,18 @@ builder.Services.AddAuthentication(options =>
 });
 
 var app = builder.Build();
+
+// Debe ejecutarse antes de cualquier middleware que dependa del esquema/IP real
+// (HTTPS redirection, cookies, autenticacion) para reconocer el proxy de Render.
+app.UseForwardedHeaders();
+
+// Crea la base SQLite y aplica las migraciones pendientes al arrancar.
+// En Render el sistema de archivos es efimero salvo que se monte un disco persistente.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
