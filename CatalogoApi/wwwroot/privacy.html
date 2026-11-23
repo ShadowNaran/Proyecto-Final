@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad - Catálogo Audiovisual API</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --card-sub-bg: #0f172a;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --tiktok: #000000;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-focus: #475569;
+            --badge-bg: #064e3b;
+            --badge-text: #6ee7b7;
+            --code-bg: #0f172a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2.5rem 1.25rem;
+            line-height: 1.65;
+        }
+
+        .container {
+            max-width: 860px;
+            width: 100%;
+        }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-hover);
+            text-decoration: underline;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+            margin-bottom: 2rem;
+        }
+
+        header.doc-header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background-color: var(--badge-bg);
+            color: var(--badge-text);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.3rem 0.75rem;
+            border-radius: 9999px;
+            margin-bottom: 0.75rem;
+        }
+
+        h1 {
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .doc-meta {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        h2 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-top: 2rem;
+            margin-bottom: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h2::before {
+            content: "";
+            display: inline-block;
+            width: 4px;
+            height: 1.25rem;
+            background-color: #10b981;
+            border-radius: 2px;
+        }
+
+        p {
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        ul, ol {
+            padding-left: 0;
+            margin-bottom: 1.25rem;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        ul li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.6rem;
+            color: #cbd5e1;
+        }
+
+        ul li::before {
+            content: "•";
+            position: absolute;
+            left: 0.35rem;
+            color: #10b981;
+            font-weight: bold;
+            font-size: 1.2rem;
+            line-height: 1.4;
+        }
+
+        ol {
+            list-style: decimal;
+            margin-left: 1.5rem;
+            color: #cbd5e1;
+        }
+
+        ol li {
+            margin-bottom: 0.6rem;
+            padding-left: 0.35rem;
+        }
+
+        code {
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            color: #93c5fd;
+            padding: 0.15rem 0.45rem;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        .highlight-box {
+            background-color: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 1.35rem;
+            margin: 1.5rem 0;
+        }
+
+        .highlight-box h3 {
+            font-size: 1.1rem;
+            color: #6ee7b7;
+            margin-bottom: 0.65rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .highlight-box p {
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            margin: 1.25rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            text-align: left;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: #cbd5e1;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .warning-card {
+            background-color: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .warning-card h3 {
+            color: #fca5a5;
+            font-size: 1.05rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        @media (max-width: 640px) {
+            .card {
+                padding: 1.5rem;
+            }
+            h1 {
+                font-size: 1.7rem;
+            }
+            h2 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-bar">
+            <a href="/" class="nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Volver al Catálogo
+            </a>
+            <a href="/terms.html" class="nav-link">
+                Ver Términos de Servicio &rarr;
+            </a>
+        </nav>
+
+        <main class="card">
+            <header class="doc-header">
+                <span class="badge">Privacidad y Protección de Datos</span>
+                <h1>Política de Privacidad</h1>
+                <div class="doc-meta">
+                    <strong>Catálogo Audiovisual API</strong> (ProyectoFinalLogin) &bull; Última actualización: Noviembre 2026
+                </div>
+            </header>
+
+            <section>
+                <h2>1. Identificación y Alcance</h2>
+                <p>
+                    Esta Política de Privacidad describe el tratamiento de datos llevado a cabo por la aplicación web 
+                    <strong>Catálogo Audiovisual API</strong> (referenciada internamente como <em>ProyectoFinalLogin</em>). 
+                    Nos comprometemos con la máxima transparencia y el respeto a la privacidad y soberanía de los datos personales 
+                    de cada uno de nuestros usuarios.
+                </p>
+            </section>
+
+            <section>
+                <h2>2. Autenticación con TikTok Login Kit</h2>
+                <p>
+                    Nuestra plataforma implementa <strong>TikTok Login Kit v2</strong> como mecanismo de inicio de sesión delegado mediante OAuth 2.0. 
+                    En estricto cumplimiento con las políticas de desarrolladores de TikTok y el principio de minimización de datos:
+                </p>
+
+                <div class="highlight-box">
+                    <h3>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        Datos solicitados mediante TikTok Login Kit
+                    </h3>
+                    <p>
+                        Al iniciar sesión a través de TikTok, la aplicación solicita <strong>única y exclusivamente</strong> el permiso (scope) oficial <code>user.info.basic</code>. No se solicita ningún otro permiso ampliado.
+                    </p>
+                </div>
+
+                <p>Los únicos tres campos recolectados a través de dicho scope son:</p>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Campo</th>
+                                <th>Tipo</th>
+                                <th>Propósito en la Aplicación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>open_id</code></td>
+                                <td>Identificador único seudonimizado</td>
+                                <td>Identificar unívocamente la cuenta del usuario en nuestra plataforma sin requerir credenciales personales.</td>
+                            </tr>
+                            <tr>
+                                <td><code>display_name</code></td>
+                                <td>Texto (Nombre público)</td>
+                                <td>Mostrar el nombre de perfil del usuario en la barra superior y en el estado de sesión activa.</td>
+                            </tr>
+                            <tr>
+                                <td><code>avatar_url</code></td>
+                                <td>URL pública de imagen</td>
+                                <td>Visualizar la imagen de perfil del usuario dentro de la interfaz gráfica durante su navegación.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="warning-card">
+                    <h3>Lo que NUNCA solicitamos ni accedemos en TikTok:</h3>
+                    <p>
+                        Nuestra aplicación <strong>NO</strong> solicita acceso a contraseñas, mensajes privados (DMs), videos (públicos o privados), borradores, historial de navegación, listas de seguidores o seguidos, comentarios, teléfono ni información financiera.
+                    </p>
+                </div>
+            </section>
+
+            <section>
+                <h2>3. Finalidad Exclusiva del Uso de Datos</h2>
+                <p>
+                    Los datos obtenidos mediante el proceso de autenticación se utilizan <strong>exclusivamente</strong> para los siguientes fines operativos internos:
+                </p>
+                <ul>
+                    <li><strong>Identificación de sesión:</strong> Reconocer al usuario autenticado durante su navegación en la aplicación.</li>
+                    <li><strong>Gestión de catálogo personalizada:</strong> Permitir al usuario crear y consultar sus listas de reproducción, marcar películas/series favoritas y publicar reseñas cinematográficas asociadas a su perfil.</li>
+                    <li><strong>Seguridad y control de acceso:</strong> Validar que las peticiones a los endpoints protegidos de la API provengan de un usuario legítimo.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>4. Cero Venta o Compartición con Terceros</h2>
+                <div class="highlight-box">
+                    <h3>Garantía de Confidencialidad</h3>
+                    <p>
+                        <strong>Catálogo Audiovisual API no vende, no comercializa, no alquila ni comparte bajo ningún concepto los datos personales ni la información del perfil de TikTok con terceras empresas, intermediarios de publicidad, plataformas de analítica invasiva ni redes de marketing.</strong>
+                    </p>
+                </div>
+                <p>
+                    Toda la información se procesa estrictamente en la infraestructura del servidor de la aplicación y permanece protegida mediante estándares de la industria.
+                </p>
+            </section>
+
+            <section>
+                <h2>5. Almacenamiento y Cookies de Sesión</h2>
+                <p>
+                    El estado de autenticación se gestiona a través de una cookie segura cifrada de ASP.NET Core:
+                </p>
+                <ul>
+                    <li>Configurada con atributo <code>HttpOnly</code> para impedir su lectura mediante scripts de terceros (protección contra ataques XSS).</li>
+                    <li>Configurada con directivas <code>SameSite</code> para proteger contra ataques de falsificación de petición (CSRF).</li>
+                    <li>Transmisión protegida bajo protocolo seguro HTTPS en producción.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>6. Cierre de Sesión y Eliminación de Datos (Derechos del Usuario)</h2>
+                <p>
+                    El usuario mantiene el control total sobre su información en todo momento y cuenta con los siguientes mecanismos para gestionar o eliminar sus datos:
+                </p>
+
+                <h3 style="font-size: 1.1rem; color: #f8fafc; margin-top: 1.25rem; margin-bottom: 0.5rem;">A. Cierre de Sesión Inmediato</h3>
+                <p>
+                    Puede terminar su sesión en cualquier momento desde la página de inicio pulsando el botón <strong>"Cerrar sesión"</strong>, o realizando una solicitud <code>POST</code> a <code>/api/auth/logout</code>. Esto destruye de forma instantánea la cookie de sesión en su navegador.
+                </p>
+
+                <h3 style="font-size: 1.1rem; color: #f8fafc; margin-top: 1.25rem; margin-bottom: 0.5rem;">B. Revocación de Permisos desde TikTok</h3>
+                <p>
+                    Para desvincular definitivamente su cuenta de TikTok de nuestra aplicación, siga estos sencillos pasos:
+                </p>
+                <ol>
+                    <li>Abra la aplicación de TikTok en su dispositivo móvil o acceda a <a href="https://www.tiktok.com" target="_blank" rel="noopener" style="color: var(--primary);">tiktok.com</a> en su navegador.</li>
+                    <li>Diríjase a su <strong>Perfil</strong> y abra el menú de <strong>Ajustes y Privacidad</strong> (icono de tres líneas).</li>
+                    <li>Seleccione el apartado <strong>Seguridad y Permisos</strong> &rarr; <strong>Apps y servicios autorizados</strong>.</li>
+                    <li>Busque <strong>ProyectoFinalLogin</strong> (o <strong>Catálogo Audiovisual API</strong>) y seleccione <strong>Revocar acceso</strong>.</li>
+                </ol>
+
+                <h3 style="font-size: 1.1rem; color: #f8fafc; margin-top: 1.25rem; margin-bottom: 0.5rem;">C. Solicitud de Eliminación Permanente de Datos</h3>
+                <p>
+                    Si desea solicitar la supresión completa de cualquier dato asociado a su <code>open_id</code> (reseñas, listas de favoritos o registros de sesión en el catálogo), puede enviar un correo electrónico a nuestro equipo a la dirección indicada al pie de este documento indicando su solicitud. Su información será purgada en un plazo no mayor a 48 horas hábiles.
+                </p>
+            </section>
+
+            <section>
+                <h2>7. Contacto y Consultas</h2>
+                <p>
+                    Para ejercer sus derechos de acceso, rectificación, cancelación u oposición, o para cualquier consulta sobre esta Política de Privacidad, contáctenos en:
+                </p>
+                <div class="highlight-box">
+                    <p>
+                        <strong>Responsable del Tratamiento:</strong> Equipo de Desarrollo Catálogo Audiovisual API (ProyectoFinalLogin)<br>
+                        <strong>Correo de Privacidad y Soporte:</strong> privacidad.proyectofinallogin@gmail.com<br>
+                        <strong>Ubicación web:</strong> /privacy.html
+                    </p>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2026 Catálogo Audiovisual API (ProyectoFinalLogin). Todos los derechos reservados.</p>
+            <div class="footer-links">
+                <a href="/">Inicio</a>
+                <a href="/scalar/v1">Documentación API (Scalar)</a>
+                <a href="/terms.html">Términos de Servicio</a>
+                <a href="/privacy.html">Política de Privacidad</a>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
