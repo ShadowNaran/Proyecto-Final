@@ -9,45 +9,69 @@ namespace CatalogoApi.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
+    private readonly IConfiguration _configuration;
+
+    public AuthController(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
+    private string GetFrontendRedirectUri()
+    {
+        var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL");
+        if (!string.IsNullOrWhiteSpace(frontendUrl))
+        {
+            return frontendUrl.Trim();
+        }
+
+        frontendUrl = _configuration["FRONTEND_URL"] ?? _configuration["FrontendUrl"];
+        if (!string.IsNullOrWhiteSpace(frontendUrl))
+        {
+            return frontendUrl.Trim();
+        }
+
+        return "/";
+    }
+
     [HttpGet("login/twitch")]
     public IActionResult LoginTwitch()
     {
-        var properties = new AuthenticationProperties { RedirectUri = "/" };
+        var properties = new AuthenticationProperties { RedirectUri = GetFrontendRedirectUri() };
         return Challenge(properties, "Twitch");
     }
 
     [HttpGet("login/twitter")]
     public IActionResult LoginTwitter()
     {
-        var properties = new AuthenticationProperties { RedirectUri = "/" };
+        var properties = new AuthenticationProperties { RedirectUri = GetFrontendRedirectUri() };
         return Challenge(properties, "Twitter");
     }
 
     [HttpGet("login/discord")]
     public IActionResult LoginDiscord()
     {
-        var properties = new AuthenticationProperties { RedirectUri = "/" };
+        var properties = new AuthenticationProperties { RedirectUri = GetFrontendRedirectUri() };
         return Challenge(properties, "Discord");
     }
 
     [HttpGet("login/spotify")]
     public IActionResult LoginSpotify()
     {
-        var properties = new AuthenticationProperties { RedirectUri = "/" };
+        var properties = new AuthenticationProperties { RedirectUri = GetFrontendRedirectUri() };
         return Challenge(properties, "Spotify");
     }
 
     [HttpGet("login/dropbox")]
     public IActionResult LoginDropbox()
     {
-        var properties = new AuthenticationProperties { RedirectUri = "/" };
+        var properties = new AuthenticationProperties { RedirectUri = GetFrontendRedirectUri() };
         return Challenge(properties, "Dropbox");
     }
 
     [HttpGet("login/slack")]
     public IActionResult LoginSlack()
     {
-        var properties = new AuthenticationProperties { RedirectUri = "/" };
+        var properties = new AuthenticationProperties { RedirectUri = GetFrontendRedirectUri() };
         return Challenge(properties, "Slack");
     }
 
