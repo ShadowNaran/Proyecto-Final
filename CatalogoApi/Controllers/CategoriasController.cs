@@ -88,9 +88,9 @@ public class CategoriasController : ControllerBase
         }
 
         var existing = await _context.Categorias.FindAsync(id);
-        if (existing == null)
+        if (existing == null || !existing.Activo)
         {
-            return NotFound(new { mensaje = $"Categoría con ID {id} no encontrada." });
+            return NotFound(new { mensaje = $"Categoría con ID {id} no existe o no se encuentra activa." });
         }
 
         var existeNombre = await _context.Categorias
@@ -103,9 +103,13 @@ public class CategoriasController : ControllerBase
         existing.Nombre = categoria.Nombre;
         existing.Descripcion = categoria.Descripcion;
         existing.Activo = categoria.Activo;
-        if (categoria.EliminadoEn != null)
+        if (!categoria.Activo && existing.EliminadoEn == null)
         {
-            existing.EliminadoEn = categoria.EliminadoEn;
+            existing.EliminadoEn = categoria.EliminadoEn ?? DateTime.UtcNow;
+        }
+        else if (categoria.Activo)
+        {
+            existing.EliminadoEn = null;
         }
 
         try
@@ -123,17 +127,17 @@ public class CategoriasController : ControllerBase
 
         return NoContent();
     }
-
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
         var categoria = await _context.Categorias.FindAsync(id);
-        if (categoria == null)
+        if (categoria == null || !categoria.Activo)
         {
-            return NotFound(new { mensaje = $"Categoría con ID {id} no encontrada." });
+            return NotFound(new { mensaje = $"Categoría con ID {id} no existe o ya no se encuentra activa." });
         }
 
-        _context.Categorias.Remove(categoria);
+        categoria.Activo = false;
+        categoria.EliminadoEn = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
         return NoContent();
