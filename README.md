@@ -5,12 +5,8 @@ Sistema web para gestionar un catálogo de películas y series, su talento, prod
 | Recurso | URL |
 |---|---|
 | Repositorio público | https://github.com/emanuelkXD/Proyecto-Final |
-| Imagen publicada | `emanuelxd/proyecto-final:1.0.0` |
-| Docker Hub | https://hub.docker.com/r/emanuelxd/proyecto-final |
 | Despliegue público (Render) | https://proyecto-finalupds.onrender.com |
 | Documentación interactiva (Scalar) | https://proyecto-finalupds.onrender.com/scalar/v1 |
-
-La imagen `emanuelxd/proyecto-final:1.0.0` fue construida con `Dockerfile.EmanuelKilibarda`.
 
 ---
 
