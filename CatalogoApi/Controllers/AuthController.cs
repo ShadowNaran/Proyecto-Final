@@ -18,12 +18,14 @@ public class AuthController : ControllerBase
 
     private string GetFrontendRedirectUri()
     {
-        var frontendUrl = _configuration["FRONTEND_URL"]
-            ?? Environment.GetEnvironmentVariable("FRONTEND_URL");
+        var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL")
+            ?? _configuration["FRONTEND_URL"]
+            ?? _configuration["FrontendUrl"];
 
         if (!string.IsNullOrWhiteSpace(frontendUrl))
         {
-            return frontendUrl.EndsWith("/") ? frontendUrl : $"{frontendUrl}/";
+            var trimmed = frontendUrl.Trim();
+            return trimmed.EndsWith("/") ? trimmed : $"{trimmed}/";
         }
 
         return "/";

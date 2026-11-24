@@ -1,42 +1,79 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: catalogo_postgres_dev
+  db:
+    image: postgres:17-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: catalogo_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-catalogo_db}
     ports:
-      - "5433:5432"
+      - "${PG_HOST_PORT:-5433}:5432"
     volumes:
-      - postgres_dev_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-catalogo_db}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - catalogo_net
 
-  catalogo-api:
+  backend:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: catalogo_api_dev
+      dockerfile: Dockerfile.AbrahamValeriano
     restart: unless-stopped
     depends_on:
-      - postgres
+      db:
+        condition: service_healthy
     ports:
-      - "8080:8080"
+      - "${API_PORT:-5174}:8080"
+    env_file:
+      - path: .env
+        required: false
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      DB_CONNECTION_STRING: Host=postgres;Port=5432;Database=catalogo_db;Username=postgres;Password=postgres
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5174}
-      REPORTE_ALLOWED_PROVIDERS: ${REPORTE_ALLOWED_PROVIDERS:-Auth0,TikTok}
-      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
-      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
-      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
+      DB_CONNECTION_STRING: Host=db;Port=5432;Database=${POSTGRES_DB:-catalogo_db};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      DATA_PROTECTION_KEYS_PATH: /app/keys
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:5174,http://127.0.0.1:5174}
+      REPORTE_ALLOWED_PROVIDERS: ${REPORTE_ALLOWED_PROVIDERS:-Auth0,Discord,Spotify,TikTok}
+      REPORTE_ALLOWED_USERS: ${REPORTE_ALLOWED_USERS:-}
+      REPORTE_MARCO_ALLOWED_PROVIDERS: ${REPORTE_MARCO_ALLOWED_PROVIDERS:-Dropbox,Slack}
+      REPORTE_MARCO_ALLOWED_USERS: ${REPORTE_MARCO_ALLOWED_USERS:-}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN:-}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID:-}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET:-}
       AUTH0_CALLBACK_PATH: ${AUTH0_CALLBACK_PATH:-/signin-auth0}
       TIKTOK_CLIENT_KEY: ${TIKTOK_CLIENT_KEY:-}
       TIKTOK_CLIENT_SECRET: ${TIKTOK_CLIENT_SECRET:-}
       TIKTOK_CALLBACK_URL: ${TIKTOK_CALLBACK_URL:-/signin-tiktok}
       ALLOWED_TIKTOK_OPEN_ID: ${ALLOWED_TIKTOK_OPEN_ID:-}
-    env_file:
-      - .env
+    volumes:
+      - dpkeys:/app/keys
+    networks:
+      - catalogo_net
+
+  frontend:
+    image: nginx:alpine
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    volumes:
+      - ./CatalogoApi/wwwroot/index.html:/usr/share/nginx/html/index.html:ro
+      - ./frontend/config.js:/usr/share/nginx/html/config.js:ro
+    networks:
+      - catalogo_net
 
 volumes:
-  postgres_dev_data:
+  pgdata:
+  dpkeys:
+
+networks:
+  catalogo_net:
+    driver: bridge

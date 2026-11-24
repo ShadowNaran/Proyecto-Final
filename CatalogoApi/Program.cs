@@ -3,11 +3,14 @@ using CatalogoApi.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Scalar.AspNetCore;
+using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -90,13 +93,58 @@ var connectionString = GetConfig(
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// Configuración de autenticación con cookies y OAuth 2.0 (Twitch y X)
+// Data Protection persistente para mantener compatibilidad de cookies entre reinicios e instancias
+var defaultKeysPath = string.Equals(
+    Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"),
+    "true",
+    StringComparison.OrdinalIgnoreCase)
+    ? "/app/keys"
+    : "./keys";
+
+var keysPath = GetConfig("DATA_PROTECTION_KEYS_PATH", "DataProtection:KeysPath", defaultKeysPath);
+Directory.CreateDirectory(keysPath);
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
+    .SetApplicationName("CatalogoApi");
+
+// CORS para permitir peticiones con credenciales desde el frontend separado (Nginx)
+const string corsPolicyName = "FrontendCorsPolicy";
+var corsOriginsRaw = GetConfig(
+    "CORS_ORIGINS",
+    "Cors:AllowedOrigins",
+    "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5174,http://127.0.0.1:5174");
+var frontendUrlOrigin = GetConfig("FRONTEND_URL", "FrontendUrl", string.Empty);
+
+var allowedOrigins = corsOriginsRaw
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .Select(origin => origin.TrimEnd('/'))
+    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+if (Uri.TryCreate(frontendUrlOrigin, UriKind.Absolute, out var frontendUri))
+{
+    allowedOrigins.Add(frontendUri.GetLeftPart(UriPartial.Authority));
+}
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(corsPolicyName, policy =>
+    {
+        policy.WithOrigins(allowedOrigins.ToArray())
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
+// Configuración de autenticación con cookies y OAuth 2.0 (6 proveedores)
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
 .AddCookie(options =>
 {
+    options.Cookie.Name = "CatalogoApi.Auth";
     options.Cookie.SameSite = SameSiteMode.Lax;
     options.Cookie.HttpOnly = true;
 
@@ -279,10 +327,51 @@ builder.Services.AddAuthentication()
     options.Scope.Add("identity.email");
     options.SaveTokens = true;
     options.Events.OnRemoteFailure = HandleOAuthRemoteFailure;
-    options.Events.OnCreatingTicket = context =>
+    options.Events.OnCreatingTicket = async context =>
     {
         context.Identity?.AddClaim(new Claim("provider", "Slack"));
-        return Task.CompletedTask;
+
+        // En Slack OAuth v2, el user token viene en authed_user.access_token
+        string? userToken = context.AccessToken;
+        if (string.IsNullOrWhiteSpace(userToken) &&
+            context.TokenResponse?.Response?.RootElement.TryGetProperty("authed_user", out var authedUser) == true &&
+            authedUser.TryGetProperty("access_token", out var tokenProp))
+        {
+            userToken = tokenProp.GetString();
+        }
+
+        if (!string.IsNullOrWhiteSpace(userToken))
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Get, "https://slack.com/api/users.identity");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userToken);
+            using var res = await context.Backchannel.SendAsync(req, context.HttpContext.RequestAborted);
+            if (res.IsSuccessStatusCode)
+            {
+                using var doc = JsonDocument.Parse(await res.Content.ReadAsStringAsync(context.HttpContext.RequestAborted));
+                if (doc.RootElement.TryGetProperty("ok", out var okProp) && okProp.GetBoolean() &&
+                    doc.RootElement.TryGetProperty("user", out var userProp))
+                {
+                    var slackId = userProp.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    var slackName = userProp.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : null;
+                    var slackEmail = userProp.TryGetProperty("email", out var emailProp) ? emailProp.GetString() : null;
+
+                    if (context.Identity != null)
+                    {
+                        foreach (var old in context.Identity.FindAll(ClaimTypes.NameIdentifier).ToList())
+                            context.Identity.RemoveClaim(old);
+                        foreach (var old in context.Identity.FindAll(ClaimTypes.Name).ToList())
+                            context.Identity.RemoveClaim(old);
+
+                        if (!string.IsNullOrWhiteSpace(slackId))
+                            context.Identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, slackId));
+                        if (!string.IsNullOrWhiteSpace(slackName))
+                            context.Identity.AddClaim(new Claim(ClaimTypes.Name, slackName));
+                        if (!string.IsNullOrWhiteSpace(slackEmail))
+                            context.Identity.AddClaim(new Claim(ClaimTypes.Email, slackEmail));
+                    }
+                }
+            }
+        }
     };
 })
 .AddTikTok("TikTok", options =>
@@ -333,6 +422,14 @@ var allowedUsers = GetConfig("REPORTE_ALLOWED_USERS", "ReporteAbraham:AllowedUse
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
+var allowedMarcoProviders = GetConfig("REPORTE_MARCO_ALLOWED_PROVIDERS", "ReporteMarco:AllowedProviders", "Dropbox,Slack")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+var allowedMarcoUsers = GetConfig("REPORTE_MARCO_ALLOWED_USERS", "ReporteMarco:AllowedUsers", string.Empty)
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("ReporteAbrahamPolicy", policy =>
@@ -361,6 +458,41 @@ builder.Services.AddAuthorization(options =>
                 };
 
                 if (userIdentifiers.Any(u => !string.IsNullOrWhiteSpace(u) && allowedUsers.Contains(u)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+    });
+
+    options.AddPolicy("ReporteMarcoPolicy", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireAssertion(context =>
+        {
+            var provider = context.User.FindFirst("provider")?.Value;
+            if (!string.IsNullOrWhiteSpace(provider) && allowedMarcoProviders.Contains(provider))
+            {
+                return true;
+            }
+
+            if (allowedMarcoUsers.Count > 0)
+            {
+                var userIdentifiers = new[]
+                {
+                    context.User.FindFirst(ClaimTypes.Name)?.Value,
+                    context.User.FindFirst("name")?.Value,
+                    context.User.FindFirst("username")?.Value,
+                    context.User.FindFirst(ClaimTypes.Email)?.Value,
+                    context.User.FindFirst("email")?.Value,
+                    context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                    context.User.FindFirst("sub")?.Value,
+                    context.User.FindFirst("id")?.Value
+                };
+
+                if (userIdentifiers.Any(u => !string.IsNullOrWhiteSpace(u) && allowedMarcoUsers.Contains(u)))
                 {
                     return true;
                 }
@@ -415,6 +547,7 @@ app.UseHttpsRedirection();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+app.UseCors(corsPolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 
