@@ -109,6 +109,20 @@ El repositorio incluye un entorno containerizado completo con **PostgreSQL 17**,
 
 ---
 
+## Despliegue Release Multi-Instancia desde Docker Hub (Abraham Valeriano)
+
+Para ejecutar el servicio en modo **release** sin compilar código fuente localmente, se publicó la imagen en Docker Hub:
+
+- **Imagen publicada**: `abrahdev/proyecto-final:1.0.0` ([Docker Hub](https://hub.docker.com/r/abrahdev/proyecto-final))
+- **Comando para levantar las 4 instancias y PostgreSQL**:
+  ```bash
+  docker compose -f docker-compose.release.yml up -d
+  ```
+- **Instancias expuestas**: `api-1` (`http://localhost:5001`), `api-2` (`http://localhost:5002`), `api-3` (`http://localhost:5003`) y `api-4` (`http://localhost:5004`), todas descargadas desde `DOCKER_IMAGE` (`abrahdev/proyecto-final:1.0.0`) y conectadas a la misma base de datos PostgreSQL (`db:5432`) en la red dedicada `catalogo_release_net` con volumen `pgdata_release`.
+- **Sesión compartida con Data Protection**: Las 4 instancias montan el mismo volumen persistente `dpkeys_release:/app/keys` con `DATA_PROTECTION_KEYS_PATH=/app/keys` y `SetApplicationName("CatalogoApi")`. De este modo comparten el mismo anillo de claves de cifrado de ASP.NET Core Data Protection, permitiendo que la cookie de autenticación `CatalogoApi.Auth` emitida en una instancia (por ejemplo `localhost:5001`) sea descifrada y reconocida automáticamente en cualquiera de los otros puertos (`5002`, `5003`, `5004`).
+
+---
+
 Flujo de trabajo y ejecucion
 
 Las reglas para hacer fork, nombrar ramas, escribir commits y abrir Pull Requests estan detalladas en CONTRIBUTING.md.
