@@ -270,4 +270,152 @@ public class ReportesController : ControllerBase
 
         return Ok(reporte);
     }
+
+    /// <summary>
+    /// Reporte autorizado de talento y producción (Emanuel Rafael Kilibarda Rocha).
+    /// Combina directores, actores, productoras y plataformas de distribución activas por región geográfica.
+    /// </summary>
+    [HttpGet("talento-emanuel")]
+    [Authorize(Policy = "ReporteEmanuelPolicy")]
+    public async Task<ActionResult<ReporteTalentoEmanuelDto>> GetReporteTalentoEmanuel()
+    {
+        var directores = await _context.Directores
+            .AsNoTracking()
+            .Where(d => d.Activo)
+            .OrderBy(d => d.Nombre)
+            .Select(d => new { d.Id, d.Nombre, Nacionalidad = d.Nacionalidad ?? string.Empty })
+            .ToListAsync();
+
+        var actores = await _context.Actores
+            .AsNoTracking()
+            .Where(a => a.Activo)
+            .OrderBy(a => a.Nombre)
+            .Select(a => new { a.Id, a.Nombre, Nacionalidad = a.Nacionalidad ?? string.Empty })
+            .ToListAsync();
+
+        var productoras = await _context.Productoras
+            .AsNoTracking()
+            .Where(p => p.Activo)
+            .OrderBy(p => p.Nombre)
+            .Select(p => new { p.Id, p.Nombre, Pais = p.Pais ?? string.Empty, p.AnioFundacion, p.SitioWeb })
+            .ToListAsync();
+
+        var plataformas = await _context.Plataformas
+            .AsNoTracking()
+            .Where(p => p.Activo)
+            .OrderBy(p => p.Nombre)
+            .Select(p => new ReportePlataformaResumenDto
+            {
+                Id = p.Id,
+                Nombre = p.Nombre,
+                SitioWeb = p.SitioWeb,
+                PrecioMensual = p.PrecioMensual,
+                PaisDisponible = p.PaisDisponible
+            })
+            .ToListAsync();
+
+        static string NormalizarPais(string? valor)
+        {
+            if (string.IsNullOrWhiteSpace(valor)) return "Sin especificar";
+            var trim = valor.Trim();
+            return string.IsNullOrEmpty(trim) ? "Sin especificar" : trim;
+        }
+
+        var directoresPorPais = directores
+            .GroupBy(d => NormalizarPais(d.Nacionalidad), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                g => g.Key,
+                g => new
+                {
+                    Pais = string.IsNullOrWhiteSpace(g.First().Nacionalidad) ? g.Key : g.First().Nacionalidad.Trim(),
+                    Directores = g.Select(d => d.Nombre).ToList()
+                },
+                StringComparer.OrdinalIgnoreCase);
+
+        var actoresPorPais = actores
+            .GroupBy(a => NormalizarPais(a.Nacionalidad), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                g => g.Key,
+                g => new
+                {
+                    Pais = string.IsNullOrWhiteSpace(g.First().Nacionalidad) ? g.Key : g.First().Nacionalidad.Trim(),
+                    Actores = g.Select(a => a.Nombre).ToList()
+                },
+                StringComparer.OrdinalIgnoreCase);
+
+        var productorasPorPais = productoras
+            .GroupBy(p => NormalizarPais(p.Pais), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                g => g.Key,
+                g => new
+                {
+                    Pais = string.IsNullOrWhiteSpace(g.First().Pais) ? g.Key : g.First().Pais.Trim(),
+                    Productoras = g.Select(p => p.Nombre).ToList()
+                },
+                StringComparer.OrdinalIgnoreCase);
+
+        var todosLosPaises = directoresPorPais.Keys
+            .Concat(actoresPorPais.Keys)
+            .Concat(productorasPorPais.Keys)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(p => p.Equals("Sin especificar", StringComparison.OrdinalIgnoreCase) ? 1 : 0)
+            .ThenBy(p => p, StringComparer.OrdinalIgnoreCase);
+
+        var desglosePorPais = new List<ReporteRegionDesgloseDto>();
+        foreach (var clave in todosLosPaises)
+        {
+            directoresPorPais.TryGetValue(clave, out var dInfo);
+            actoresPorPais.TryGetValue(clave, out var aInfo);
+            productorasPorPais.TryGetValue(clave, out var pInfo);
+
+            var directoresList = dInfo?.Directores ?? new List<string>();
+            var actoresList = aInfo?.Actores ?? new List<string>();
+            var productorasList = pInfo?.Productoras ?? new List<string>();
+
+            desglosePorPais.Add(new ReporteRegionDesgloseDto
+            {
+                Pais = clave,
+                CantidadDirectores = directoresList.Count,
+                CantidadActores = actoresList.Count,
+                TotalTalento = directoresList.Count + actoresList.Count,
+                CantidadProductoras = productorasList.Count,
+                Directores = directoresList,
+                Actores = actoresList,
+                Productoras = productorasList
+            });
+        }
+
+        var precios = plataformas
+            .Where(p => p.PrecioMensual.HasValue)
+            .Select(p => p.PrecioMensual!.Value)
+            .ToList();
+
+        var precioPromedio = precios.Count > 0
+            ? Math.Round(precios.Average(), 2)
+            : 0m;
+
+        var totalPaises = todosLosPaises.Count(p => !p.Equals("Sin especificar", StringComparison.OrdinalIgnoreCase));
+
+        var reporte = new ReporteTalentoEmanuelDto
+        {
+            Autor = "Emanuel Rafael Kilibarda Rocha",
+            Tablas = new List<string> { "directores", "actores", "productoras", "plataformas" },
+            Proposito = "Consolidado de talento y producción cinematográfica cruzando directores, actores y casas productoras por región geográfica, junto con los canales de distribución y streaming activos.",
+            GeneradoEn = DateTime.UtcNow,
+            Resumen = new ReporteTalentoResumenDto
+            {
+                TotalDirectores = directores.Count,
+                TotalActores = actores.Count,
+                TotalTalento = directores.Count + actores.Count,
+                TotalProductoras = productoras.Count,
+                TotalPlataformas = plataformas.Count,
+                TotalPaisesRepresentados = totalPaises,
+                PrecioPromedioSuscripcion = precioPromedio
+            },
+            DesglosePorPais = desglosePorPais,
+            PlataformasDistribucion = plataformas
+        };
+
+        return Ok(reporte);
+    }
 }

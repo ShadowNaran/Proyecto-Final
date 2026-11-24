@@ -430,6 +430,14 @@ var allowedMarcoUsers = GetConfig("REPORTE_MARCO_ALLOWED_USERS", "ReporteMarco:A
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
+var allowedEmanuelProviders = GetConfig("REPORTE_EMANUEL_ALLOWED_PROVIDERS", "ReporteEmanuel:AllowedProviders", "Auth0,TikTok")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+var allowedEmanuelUsers = GetConfig("REPORTE_EMANUEL_ALLOWED_USERS", "ReporteEmanuel:AllowedUsers", string.Empty)
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("ReporteAbrahamPolicy", policy =>
@@ -493,6 +501,41 @@ builder.Services.AddAuthorization(options =>
                 };
 
                 if (userIdentifiers.Any(u => !string.IsNullOrWhiteSpace(u) && allowedMarcoUsers.Contains(u)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+    });
+
+    options.AddPolicy("ReporteEmanuelPolicy", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireAssertion(context =>
+        {
+            var provider = context.User.FindFirst("provider")?.Value;
+            if (!string.IsNullOrWhiteSpace(provider) && allowedEmanuelProviders.Contains(provider))
+            {
+                return true;
+            }
+
+            if (allowedEmanuelUsers.Count > 0)
+            {
+                var userIdentifiers = new[]
+                {
+                    context.User.FindFirst(ClaimTypes.Name)?.Value,
+                    context.User.FindFirst("name")?.Value,
+                    context.User.FindFirst("username")?.Value,
+                    context.User.FindFirst(ClaimTypes.Email)?.Value,
+                    context.User.FindFirst("email")?.Value,
+                    context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                    context.User.FindFirst("sub")?.Value,
+                    context.User.FindFirst("id")?.Value
+                };
+
+                if (userIdentifiers.Any(u => !string.IsNullOrWhiteSpace(u) && allowedEmanuelUsers.Contains(u)))
                 {
                     return true;
                 }

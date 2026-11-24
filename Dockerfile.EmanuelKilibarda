@@ -1,0 +1,41 @@
+# syntax=docker/dockerfile:1
+
+# Dockerfile de Emanuel Rafael Kilibarda Rocha (Líder / Integrante 1)
+# Construye y ejecuta el proyecto .NET CatalogoApi con compilación multi-etapa en Release.
+
+# ---------- Etapa 1: compilacion y publicacion ----------
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# Copiar primero el csproj para aprovechar la cache de capas al restaurar dependencias
+COPY ["CatalogoApi/CatalogoApi.csproj", "CatalogoApi/"]
+RUN dotnet restore "CatalogoApi/CatalogoApi.csproj"
+
+# Copiar el codigo fuente y publicar en modo Release
+COPY CatalogoApi/ CatalogoApi/
+WORKDIR /src/CatalogoApi
+RUN dotnet publish "CatalogoApi.csproj" \
+    -c Release \
+    -o /app/publish \
+    --no-restore \
+    /p:UseAppHost=false
+
+# ---------- Etapa 2: runtime ----------
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+WORKDIR /app
+
+# Carpeta para llaves compartidas de Data Protection y permisos al usuario app sin privilegios
+USER root
+COPY --from=build --chown=app:app /app/publish ./
+RUN mkdir -p /app/keys && chown -R app:app /app
+
+ENV ASPNETCORE_URLS=http://+:8080 \
+    ASPNETCORE_ENVIRONMENT=Production \
+    DOTNET_RUNNING_IN_CONTAINER=true \
+    DATA_PROTECTION_KEYS_PATH=/app/keys
+
+EXPOSE 8080
+
+USER app
+
+ENTRYPOINT ["dotnet", "CatalogoApi.dll"]
