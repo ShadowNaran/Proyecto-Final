@@ -2,28 +2,40 @@ using CatalogoApi.Authentication;
 using CatalogoApi.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Scalar.AspNetCore;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Cargar variables de entorno desde .env si existe (evitando fallos si no existe)
+// Cargar variables de entorno desde .env si existe en local (sin fallar si no existe en Render)
 var envPaths = new[]
 {
     Path.Combine(Directory.GetCurrentDirectory(), ".env"),
+    Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"),
     Path.Combine(Directory.GetCurrentDirectory(), "CatalogoApi", ".env"),
-    Path.Combine(AppContext.BaseDirectory, ".env")
+    Path.Combine(AppContext.BaseDirectory, ".env"),
+    Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".env")
 };
 
 foreach (var envPath in envPaths)
 {
-    if (File.Exists(envPath))
+    try
     {
-        DotNetEnv.Env.Load(envPath);
-        break;
+        var fullPath = Path.GetFullPath(envPath);
+        if (File.Exists(fullPath))
+        {
+            DotNetEnv.Env.Load(fullPath);
+            break;
+        }
+    }
+    catch
+    {
+        // Ignorar si no existe o ruta inválida
     }
 }
 
@@ -114,6 +126,79 @@ builder.Services.AddAuthentication(options =>
         }
         return Task.CompletedTask;
     };
+});
+
+Task HandleOAuthRemoteFailure(RemoteFailureContext context)
+{
+    var error = context.Failure?.Message ?? "Error durante la autenticación externa";
+    context.Response.Redirect("/?error=" + Uri.EscapeDataString(error));
+    context.HandleResponse();
+    return Task.CompletedTask;
+}
+
+builder.Services.AddAuthentication()
+.AddOpenIdConnect("Auth0", options =>
+{
+    var auth0Domain = GetConfig("AUTH0_DOMAIN", "Authentication:Auth0:Domain", "dummy-auth0-domain");
+    var authority = auth0Domain.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                    auth0Domain.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+        ? auth0Domain
+        : $"https://{auth0Domain}";
+
+    options.Authority = authority;
+    options.ClientId = GetConfig("AUTH0_CLIENT_ID", "Authentication:Auth0:ClientId", "dummy-auth0-client-id");
+    options.ClientSecret = GetConfig("AUTH0_CLIENT_SECRET", "Authentication:Auth0:ClientSecret", "dummy-auth0-client-secret");
+    options.ResponseType = OpenIdConnectResponseType.Code;
+    options.ResponseMode = OpenIdConnectResponseMode.Query;
+    options.CallbackPath = new PathString(GetConfig("AUTH0_CALLBACK_PATH", "Authentication:Auth0:CallbackPath", "/signin-auth0"));
+    options.SaveTokens = true;
+
+    options.Scope.Clear();
+    options.Scope.Add("openid");
+    options.Scope.Add("profile");
+    options.Scope.Add("email");
+
+    options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "sub");
+    options.ClaimActions.MapJsonKey(ClaimTypes.Name, "name");
+    options.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
+
+    options.Events = new OpenIdConnectEvents
+    {
+        OnRemoteFailure = HandleOAuthRemoteFailure,
+        OnTokenValidated = context =>
+        {
+            if (context.Principal?.Identity is ClaimsIdentity identity)
+            {
+                var sub = identity.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                          ?? identity.FindFirst("sub")?.Value;
+                if (!string.IsNullOrEmpty(sub) && identity.FindFirst(ClaimTypes.NameIdentifier) == null)
+                {
+                    identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, sub));
+                }
+
+                var name = identity.FindFirst(ClaimTypes.Name)?.Value
+                           ?? identity.FindFirst("name")?.Value
+                           ?? identity.FindFirst("nickname")?.Value;
+                if (!string.IsNullOrEmpty(name) && identity.FindFirst(ClaimTypes.Name) == null)
+                {
+                    identity.AddClaim(new Claim(ClaimTypes.Name, name));
+                }
+
+                var email = identity.FindFirst(ClaimTypes.Email)?.Value
+                            ?? identity.FindFirst("email")?.Value;
+                if (!string.IsNullOrEmpty(email) && identity.FindFirst(ClaimTypes.Email) == null)
+                {
+                    identity.AddClaim(new Claim(ClaimTypes.Email, email));
+                }
+
+                if (!identity.HasClaim("provider", "Auth0"))
+                {
+                    identity.AddClaim(new Claim("provider", "Auth0"));
+                }
+            }
+            return Task.CompletedTask;
+        }
+    };
 })
 .AddTwitch("Twitch", options =>
 {
@@ -121,6 +206,7 @@ builder.Services.AddAuthentication(options =>
     options.ClientSecret = GetConfig("TWITCH_CLIENT_SECRET", "Authentication:Twitch:ClientSecret", "dummy-twitch-client-secret");
     options.CallbackPath = new PathString(GetConfig("TWITCH_CALLBACK_PATH", "Authentication:Twitch:CallbackPath", "/signin-twitch"));
     options.SaveTokens = true;
+    options.Events.OnRemoteFailure = HandleOAuthRemoteFailure;
     options.Events.OnCreatingTicket = context =>
     {
         context.Identity?.AddClaim(new Claim("provider", "Twitch"));
@@ -135,6 +221,7 @@ builder.Services.AddAuthentication(options =>
     // OAuth 2.0 con endpoint de usuario básico sin requerir email
     options.UserInformationEndpoint = "https://api.twitter.com/2/users/me";
     options.SaveTokens = true;
+    options.Events.OnRemoteFailure = HandleOAuthRemoteFailure;
     options.Events.OnCreatingTicket = context =>
     {
         context.Identity?.AddClaim(new Claim("provider", "Twitter"));
@@ -149,6 +236,7 @@ builder.Services.AddAuthentication(options =>
     options.Scope.Add("identify");
     options.Scope.Add("email");
     options.SaveTokens = true;
+    options.Events.OnRemoteFailure = HandleOAuthRemoteFailure;
     options.Events.OnCreatingTicket = context =>
     {
         context.Identity?.AddClaim(new Claim("provider", "Discord"));
@@ -162,6 +250,7 @@ builder.Services.AddAuthentication(options =>
     options.CallbackPath = new PathString(GetConfig("SPOTIFY_CALLBACK_PATH", "Authentication:Spotify:CallbackPath", "/signin-spotify"));
     options.Scope.Add("user-read-email");
     options.SaveTokens = true;
+    options.Events.OnRemoteFailure = HandleOAuthRemoteFailure;
     options.Events.OnCreatingTicket = context =>
     {
         context.Identity?.AddClaim(new Claim("provider", "Spotify"));
@@ -174,6 +263,7 @@ builder.Services.AddAuthentication(options =>
     options.ClientSecret = GetConfig("DROPBOX_CLIENT_SECRET", "Authentication:Dropbox:ClientSecret", "dummy-dropbox-client-secret");
     options.CallbackPath = new PathString(GetConfig("DROPBOX_CALLBACK_PATH", "Authentication:Dropbox:CallbackPath", "/signin-dropbox"));
     options.SaveTokens = true;
+    options.Events.OnRemoteFailure = HandleOAuthRemoteFailure;
     options.Events.OnCreatingTicket = context =>
     {
         context.Identity?.AddClaim(new Claim("provider", "Dropbox"));
@@ -188,6 +278,7 @@ builder.Services.AddAuthentication(options =>
     options.Scope.Add("identity.basic");
     options.Scope.Add("identity.email");
     options.SaveTokens = true;
+    options.Events.OnRemoteFailure = HandleOAuthRemoteFailure;
     options.Events.OnCreatingTicket = context =>
     {
         context.Identity?.AddClaim(new Claim("provider", "Slack"));
@@ -234,7 +325,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-var allowedProviders = GetConfig("REPORTE_ALLOWED_PROVIDERS", "ReporteAbraham:AllowedProviders", "Discord,Spotify")
+var allowedProviders = GetConfig("REPORTE_ALLOWED_PROVIDERS", "ReporteAbraham:AllowedProviders", "Auth0,Discord,Spotify,TikTok")
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 

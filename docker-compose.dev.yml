@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: catalogo_postgres_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: catalogo_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+
+  catalogo-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: catalogo_api_dev
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      DB_CONNECTION_STRING: Host=postgres;Port=5432;Database=catalogo_db;Username=postgres;Password=postgres
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5174}
+      REPORTE_ALLOWED_PROVIDERS: ${REPORTE_ALLOWED_PROVIDERS:-Auth0,TikTok}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
+      AUTH0_CALLBACK_PATH: ${AUTH0_CALLBACK_PATH:-/signin-auth0}
+      TIKTOK_CLIENT_KEY: ${TIKTOK_CLIENT_KEY:-}
+      TIKTOK_CLIENT_SECRET: ${TIKTOK_CLIENT_SECRET:-}
+      TIKTOK_CALLBACK_URL: ${TIKTOK_CALLBACK_URL:-/signin-tiktok}
+      ALLOWED_TIKTOK_OPEN_ID: ${ALLOWED_TIKTOK_OPEN_ID:-}
+    env_file:
+      - .env
+
+volumes:
+  postgres_dev_data:
