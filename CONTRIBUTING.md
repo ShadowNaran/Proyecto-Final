@@ -4,9 +4,9 @@ Guia de contribucion
 
 Haz fork de este repositorio hacia tu cuenta de GitHub y clona tu copia en local:
 
-git clone https://github.com/TU_USUARIO/Tarea-6.git
-cd Tarea-6
-git remote add upstream https://github.com/emanuelkXD/Tarea-6.git
+git clone https://github.com/TU_USUARIO/Proyecto-Final.git
+cd Proyecto-Final
+git remote add upstream https://github.com/emanuelkXD/Proyecto-Final.git
 
 2. Nomenclatura de ramas y commits
 

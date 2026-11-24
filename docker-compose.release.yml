@@ -1,17 +1,84 @@
+# ============================================================================
+# Entorno de RELEASE - Punto 7 (20 pts)
+# ----------------------------------------------------------------------------
+# Descarga y ejecuta la imagen publicada en Docker Hub. No contiene ninguna
+# sección "build" y no compila código fuente en la máquina que lo ejecuta.
+#
+# Uso:
+#   docker compose -f docker-compose.release.yml up -d
+#   docker compose -f docker-compose.release.yml config
+#
+# Los valores sensibles se leen del archivo .env (no versionado). Las variables
+# públicas y los valores por defecto están documentados en .env.example.
+# ============================================================================
+
 x-api-base: &api-base
-  image: ${DOCKER_IMAGE:-abrahdev/proyecto-final:1.0.0}
+  image: ${DOCKER_IMAGE:-emanuelxd/proyecto-final:1.0.0}
   pull_policy: always
   restart: unless-stopped
   depends_on:
     db:
       condition: service_healthy
-  env_file:
-    - path: .env
-      required: false
   environment:
-    DB_CONNECTION_STRING: Host=db;Port=5432;Database=${POSTGRES_DB:-catalogo_db};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
-    DATA_PROTECTION_KEYS_PATH: /app/keys
-    CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:5174,http://127.0.0.1:5174,http://localhost:5001,http://localhost:5002,http://localhost:5003,http://localhost:5004}
+    ASPNETCORE_ENVIRONMENT: "Production"
+
+    # Todas las instancias usan la misma PostgreSQL interna.
+    DB_CONNECTION_STRING: "Host=db;Port=5432;Database=${POSTGRES_DB:-catalogo_db};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+
+    # Anillo de claves compartido: permite descifrar la cookie CatalogoApi.Auth
+    # en cualquiera de los 4 puertos sin volver a iniciar sesión.
+    DATA_PROTECTION_KEYS_PATH: "/app/keys"
+
+    # En release, el frontend se sirve desde la propia API. Si se deja vacío,
+    # AuthController redirige a "/" y cada instancia conserva su host:puerto
+    # (5001 -> 5001, 5002 -> 5002, etc.). Para un frontend separado, definir
+    # RELEASE_FRONTEND_URL con su URL pública.
+    FRONTEND_URL: "${RELEASE_FRONTEND_URL:-}"
+
+    # Orígenes permitidos para desarrollo y para las 4 instancias release.
+    CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:5174,http://127.0.0.1:5174,http://localhost:5001,http://127.0.0.1:5001,http://localhost:5002,http://127.0.0.1:5002,http://localhost:5003,http://127.0.0.1:5003,http://localhost:5004,http://127.0.0.1:5004}"
+
+    # Políticas de reportes: mismos valores por defecto que CatalogoApi/Program.cs.
+    REPORTE_ALLOWED_PROVIDERS: "${REPORTE_ALLOWED_PROVIDERS:-Auth0,Discord,Spotify,TikTok}"
+    REPORTE_ALLOWED_USERS: "${REPORTE_ALLOWED_USERS:-}"
+    REPORTE_MARCO_ALLOWED_PROVIDERS: "${REPORTE_MARCO_ALLOWED_PROVIDERS:-Dropbox,Slack}"
+    REPORTE_MARCO_ALLOWED_USERS: "${REPORTE_MARCO_ALLOWED_USERS:-}"
+    REPORTE_EMANUEL_ALLOWED_PROVIDERS: "${REPORTE_EMANUEL_ALLOWED_PROVIDERS:-Auth0,TikTok}"
+    REPORTE_EMANUEL_ALLOWED_USERS: "${REPORTE_EMANUEL_ALLOWED_USERS:-}"
+
+    # SSO Auth0 (OpenID Connect).
+    AUTH0_DOMAIN: "${AUTH0_DOMAIN:-}"
+    AUTH0_CLIENT_ID: "${AUTH0_CLIENT_ID:-}"
+    AUTH0_CLIENT_SECRET: "${AUTH0_CLIENT_SECRET:-}"
+    AUTH0_CALLBACK_PATH: "${AUTH0_CALLBACK_PATH:-/signin-auth0}"
+
+    # TikTok Login Kit v2. El callback se deja como ruta relativa para que cada
+    # instancia construya su propio redirect_uri (5001..5004).
+    TIKTOK_CLIENT_KEY: "${TIKTOK_CLIENT_KEY:-}"
+    TIKTOK_CLIENT_SECRET: "${TIKTOK_CLIENT_SECRET:-}"
+    TIKTOK_CALLBACK_URL: "${RELEASE_TIKTOK_CALLBACK_URL:-/signin-tiktok}"
+    ALLOWED_TIKTOK_OPEN_ID: "${ALLOWED_TIKTOK_OPEN_ID:-}"
+
+    # Proveedores OAuth 2.0 externos.
+    DISCORD_CLIENT_ID: "${DISCORD_CLIENT_ID:-}"
+    DISCORD_CLIENT_SECRET: "${DISCORD_CLIENT_SECRET:-}"
+    DISCORD_CALLBACK_PATH: "${DISCORD_CALLBACK_PATH:-/signin-discord}"
+    SPOTIFY_CLIENT_ID: "${SPOTIFY_CLIENT_ID:-}"
+    SPOTIFY_CLIENT_SECRET: "${SPOTIFY_CLIENT_SECRET:-}"
+    SPOTIFY_CALLBACK_PATH: "${SPOTIFY_CALLBACK_PATH:-/signin-spotify}"
+    DROPBOX_CLIENT_ID: "${DROPBOX_CLIENT_ID:-}"
+    DROPBOX_CLIENT_SECRET: "${DROPBOX_CLIENT_SECRET:-}"
+    DROPBOX_CALLBACK_PATH: "${DROPBOX_CALLBACK_PATH:-/signin-dropbox}"
+    SLACK_CLIENT_ID: "${SLACK_CLIENT_ID:-}"
+    SLACK_CLIENT_SECRET: "${SLACK_CLIENT_SECRET:-}"
+    SLACK_CALLBACK_PATH: "${SLACK_CALLBACK_PATH:-/signin-slack}"
+    TWITCH_CLIENT_ID: "${TWITCH_CLIENT_ID:-}"
+    TWITCH_CLIENT_SECRET: "${TWITCH_CLIENT_SECRET:-}"
+    TWITCH_CALLBACK_PATH: "${TWITCH_CALLBACK_PATH:-/signin-twitch}"
+    TWITTER_CLIENT_ID: "${TWITTER_CLIENT_ID:-}"
+    TWITTER_CLIENT_SECRET: "${TWITTER_CLIENT_SECRET:-}"
+    TWITTER_CALLBACK_PATH: "${TWITTER_CALLBACK_PATH:-/signin-twitter}"
+
   volumes:
     - dpkeys_release:/app/keys
   networks:
@@ -22,9 +89,9 @@ services:
     image: postgres:17-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-catalogo_db}
+      POSTGRES_USER: "${POSTGRES_USER:-postgres}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+      POSTGRES_DB: "${POSTGRES_DB:-catalogo_db}"
     volumes:
       - pgdata_release:/var/lib/postgresql/data
     healthcheck:
@@ -35,6 +102,8 @@ services:
     networks:
       - catalogo_release_net
 
+  # Exactamente 4 instancias del backend, todas con la misma imagen, base de
+  # datos, red interna y volumen de claves de Data Protection.
   api-1:
     <<: *api-base
     ports:

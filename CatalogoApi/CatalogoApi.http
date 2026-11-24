@@ -1,6 +1,31 @@
 @CatalogoApi_HostAddress = http://localhost:5174
 
-GET {{CatalogoApi_HostAddress}}/weatherforecast/
+### Estado de la sesión
+GET {{CatalogoApi_HostAddress}}/api/auth/me
 Accept: application/json
 
-###
+### Proveedores OAuth configurados
+GET {{CatalogoApi_HostAddress}}/api/auth/providers
+Accept: application/json
+
+### Iniciar sesión con Auth0 (abrir en el navegador)
+GET {{CatalogoApi_HostAddress}}/api/auth/login/sso
+
+### Iniciar sesión con TikTok (abrir en el navegador)
+GET {{CatalogoApi_HostAddress}}/api/auth/login/tiktok
+
+### Listar películas activas (requiere cookie de sesión)
+GET {{CatalogoApi_HostAddress}}/api/peliculas
+Accept: application/json
+
+### Reporte de catálogo - Abraham (requiere ReporteAbrahamPolicy)
+GET {{CatalogoApi_HostAddress}}/api/reportes/catalogo-abraham
+Accept: application/json
+
+### Reporte de comunidad - Marco (requiere ReporteMarcoPolicy)
+GET {{CatalogoApi_HostAddress}}/api/reportes/comunidad-marco
+Accept: application/json
+
+### Reporte de talento - Emanuel (requiere ReporteEmanuelPolicy)
+GET {{CatalogoApi_HostAddress}}/api/reportes/talento-emanuel
+Accept: application/json
