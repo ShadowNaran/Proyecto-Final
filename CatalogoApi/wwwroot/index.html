@@ -596,6 +596,19 @@
             </div>
         </section>
 
+        <!-- Reporte Autorizado — Talento y Producción (Emanuel Kilibarda) -->
+        <section class="section-box" id="reporte-emanuel-container">
+            <h2 class="section-title">Reporte Autorizado — Talento y Producción (Emanuel Kilibarda)</h2>
+            <div class="section-actions">
+                <button type="button" class="btn btn-scalar" id="btn-load-reporte-emanuel" onclick="loadReporteEmanuel()">
+                    Consultar Reporte /api/reportes/talento-emanuel
+                </button>
+            </div>
+            <div id="reporte-emanuel-result">
+                <p class="status-note">Combina directores, actores, productoras y plataformas activas. Requiere sesión con Auth0 o TikTok (o usuario autorizado).</p>
+            </div>
+        </section>
+
         <!-- Enlaces legales y documentación -->
         <footer style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); font-size: 0.85rem; color: var(--text-muted); display: flex; justify-content: center; align-items: center; gap: 1rem; flex-wrap: wrap;">
             <a href="/terms.html" style="color: var(--text-muted); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#3b82f6'" onmouseout="this.style.color='var(--text-muted)'">Términos de Servicio</a>
@@ -1036,6 +1049,181 @@
                     <div class="result-box">
                         <span class="badge badge-error">Error de red</span>
                         <p class="status-note">No se pudo conectar con /api/reportes/comunidad-marco.</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadReporteEmanuel() {
+            const resultContainer = document.getElementById('reporte-emanuel-result');
+            resultContainer.innerHTML = `<p class="status-note">Consultando reporte de talento y producción...</p>`;
+
+            try {
+                const response = await fetch(`${API_URL}/api/reportes/talento-emanuel`, {
+                    credentials: 'include'
+                });
+
+                if (response.status === 401) {
+                    resultContainer.innerHTML = `
+                        <div class="result-box">
+                            <span class="badge badge-error">HTTP 401 Unauthorized — Sin sesión</span>
+                            <p class="status-note">No has iniciado sesión. Autentícate con Auth0 o TikTok para consultar este reporte.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (response.status === 403) {
+                    resultContainer.innerHTML = `
+                        <div class="result-box">
+                            <span class="badge badge-warning">HTTP 403 Forbidden — Sin permisos</span>
+                            <p class="status-note">Tienes una sesión activa, pero tu proveedor o usuario no está autorizado por ReporteEmanuelPolicy en el backend.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (!response.ok) {
+                    resultContainer.innerHTML = `
+                        <div class="result-box">
+                            <span class="badge badge-error">HTTP ${response.status} ${escapeHtml(response.statusText || '')}</span>
+                            <p class="status-note">No se pudo generar el reporte de talento y producción.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const data = await response.json();
+                const resumen = data.resumen || {};
+                const desglose = Array.isArray(data.desglosePorPais) ? data.desglosePorPais : [];
+                const plataformas = Array.isArray(data.plataformasDistribucion) ? data.plataformasDistribucion : [];
+                const tablas = Array.isArray(data.tablas) ? data.tablas.join(', ') : '';
+                const generadoEn = data.generadoEn ? new Date(data.generadoEn).toLocaleString() : '';
+
+                const paisesRowsHtml = desglose.length > 0
+                    ? desglose.map(item => {
+                        const directores = Array.isArray(item.directores) && item.directores.length > 0
+                            ? escapeHtml(item.directores.join(', '))
+                            : '<em>Ninguno</em>';
+                        const actores = Array.isArray(item.actores) && item.actores.length > 0
+                            ? escapeHtml(item.actores.join(', '))
+                            : '<em>Ninguno</em>';
+                        const productoras = Array.isArray(item.productoras) && item.productoras.length > 0
+                            ? escapeHtml(item.productoras.join(', '))
+                            : '<em>Ninguna</em>';
+
+                        return `
+                            <tr>
+                                <td><strong>${escapeHtml(item.pais)}</strong></td>
+                                <td class="num">${escapeHtml(item.cantidadDirectores)}</td>
+                                <td class="num">${escapeHtml(item.cantidadActores)}</td>
+                                <td class="num">${escapeHtml(item.totalTalento)}</td>
+                                <td class="num">${escapeHtml(item.cantidadProductoras)}</td>
+                                <td>${directores}</td>
+                                <td>${actores}</td>
+                                <td>${productoras}</td>
+                            </tr>
+                        `;
+                    }).join('')
+                    : `<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No hay directores, actores ni productoras registrados todavía.</td></tr>`;
+
+                const plataformasRowsHtml = plataformas.length > 0
+                    ? plataformas.map(p => `
+                        <tr>
+                            <td><strong>${escapeHtml(p.nombre)}</strong></td>
+                            <td>${p.sitioWeb ? `<a href="${escapeHtml(p.sitioWeb)}" target="_blank" rel="noopener noreferrer">${escapeHtml(p.sitioWeb)}</a>` : '—'}</td>
+                            <td>${escapeHtml(p.paisDisponible || 'Global')}</td>
+                            <td class="num">${p.precioMensual != null ? `$${escapeHtml(p.precioMensual)}/mes` : 'Gratis / Variable'}</td>
+                        </tr>
+                    `).join('')
+                    : `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No hay plataformas de distribución registradas.</td></tr>`;
+
+                resultContainer.innerHTML = `
+                    <div class="result-box">
+                        <span class="badge badge-active">HTTP 200 OK — Acceso Autorizado</span>
+                        <div class="report-meta">
+                            <div><strong>Autor:</strong> ${escapeHtml(data.autor)}</div>
+                            <div><strong>Propósito:</strong> ${escapeHtml(data.proposito)}</div>
+                            <div><strong>Tablas consultadas:</strong> ${escapeHtml(tablas)}</div>
+                            <div><strong>Generado en:</strong> ${escapeHtml(generadoEn)}</div>
+                        </div>
+
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-value">${escapeHtml(resumen.totalDirectores ?? 0)}</div>
+                                <div class="metric-label">Directores</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${escapeHtml(resumen.totalActores ?? 0)}</div>
+                                <div class="metric-label">Actores</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${escapeHtml(resumen.totalTalento ?? 0)}</div>
+                                <div class="metric-label">Total Talento</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${escapeHtml(resumen.totalProductoras ?? 0)}</div>
+                                <div class="metric-label">Productoras</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${escapeHtml(resumen.totalPlataformas ?? 0)}</div>
+                                <div class="metric-label">Plataformas</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${escapeHtml(resumen.totalPaisesRepresentados ?? 0)}</div>
+                                <div class="metric-label">Países</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">$${escapeHtml(resumen.precioPromedioSuscripcion ?? 0)}</div>
+                                <div class="metric-label">Precio prom. suscripción</div>
+                            </div>
+                        </div>
+
+                        <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--text-primary); font-size: 1rem;">Distribución de Talento y Producción por País / Nacionalidad</h4>
+                        <div class="table-wrapper">
+                            <table class="report-table">
+                                <thead>
+                                    <tr>
+                                        <th>País / Región</th>
+                                        <th class="num">Directores</th>
+                                        <th class="num">Actores</th>
+                                        <th class="num">Total Talento</th>
+                                        <th class="num">Productoras</th>
+                                        <th>Directores</th>
+                                        <th>Actores</th>
+                                        <th>Casas Productoras</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${paisesRowsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--text-primary); font-size: 1rem;">Plataformas de Distribución y Streaming</h4>
+                        <div class="table-wrapper">
+                            <table class="report-table">
+                                <thead>
+                                    <tr>
+                                        <th>Plataforma</th>
+                                        <th>Sitio Web</th>
+                                        <th>País Disponible</th>
+                                        <th class="num">Precio Mensual</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${plataformasRowsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error al cargar el reporte de Emanuel:', error);
+                resultContainer.innerHTML = `
+                    <div class="result-box">
+                        <span class="badge badge-error">Error de red</span>
+                        <p class="status-note">No se pudo conectar con /api/reportes/talento-emanuel.</p>
                     </div>
                 `;
             }

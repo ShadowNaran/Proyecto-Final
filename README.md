@@ -123,6 +123,57 @@ Para ejecutar el servicio en modo **release** sin compilar código fuente localm
 
 ---
 
+## Reportes Autorizados del Proyecto
+
+El sistema expone endpoints de reportes analíticos protegidos por políticas granulares de autorización en ASP.NET Core (`CatalogoApi/Program.cs`), donde cada integrante diseñó un reporte que consolida y cruza datos de al menos 3 tablas distintas:
+
+### 1. Reporte de Catálogo (Abraham Valeriano)
+- **Endpoint**: `GET /api/reportes/catalogo-abraham`
+- **Política**: `ReporteAbrahamPolicy`
+- **Proveedores autorizados por defecto**: `Auth0`, `Discord`, `Spotify`, `TikTok` (configurable vía `REPORTE_ALLOWED_PROVIDERS` y `REPORTE_ALLOWED_USERS`).
+- **Tablas consultadas**: `categorias`, `peliculas`, `series`, `temporadas`.
+- **Propósito**: Consolidado del catálogo audiovisual activo por categoría combinando películas, series, temporadas y episodios.
+
+### 2. Reporte de Comunidad (Marco Antonio Arias Girón)
+- **Endpoint**: `GET /api/reportes/comunidad-marco`
+- **Política**: `ReporteMarcoPolicy`
+- **Proveedores autorizados por defecto**: `Dropbox`, `Slack` (configurable vía `REPORTE_MARCO_ALLOWED_PROVIDERS` y `REPORTE_MARCO_ALLOWED_USERS`).
+- **Tablas consultadas**: `resenas`, `listas_reproduccion`, `favoritos`, `premios`.
+- **Propósito**: Métricas de interacción comunitaria, calificaciones promedio y premios por obra junto con las listas de reproducción activas.
+
+### 3. Reporte de Talento y Producción (Emanuel Rafael Kilibarda Rocha)
+- **Endpoint**: `GET /api/reportes/talento-emanuel`
+- **Política**: `ReporteEmanuelPolicy`
+- **Proveedores autorizados por defecto**: `Auth0`, `TikTok` (configurable vía `REPORTE_EMANUEL_ALLOWED_PROVIDERS` y `REPORTE_EMANUEL_ALLOWED_USERS`).
+- **Tablas consultadas**: `directores`, `actores`, `productoras`, `plataformas`.
+- **Propósito**: Consolidado de talento y producción cinematográfica cruzando directores, actores y casas productoras por región geográfica/nacionalidad, junto con el ecosistema de distribución y streaming activo.
+- **Estructura de respuesta**:
+  - `autor`: "Emanuel Rafael Kilibarda Rocha"
+  - `tablas`: `["directores", "actores", "productoras", "plataformas"]`
+  - `proposito`: Descripción del análisis de talento, producción y distribución.
+  - `generadoEn`: Marca de tiempo UTC.
+  - `resumen`: `totalDirectores`, `totalActores`, `totalTalento`, `totalProductoras`, `totalPlataformas`, `totalPaisesRepresentados`, `precioPromedioSuscripcion`.
+  - `desglosePorPais`: Agrupación por país con conteo de directores, actores y productoras, sumatoria de talento y listas nominales de talento por país.
+  - `plataformasDistribucion`: Lista de plataformas con sitio web, país de disponibilidad y costo mensual.
+
+---
+
+## Dockerfiles Individuales Multi-Etapa
+
+Cada integrante cuenta con su propio Dockerfile optimizado para producción bajo estándar multi-etapa (.NET 10 SDK para compilación/publicación en modo `Release` y ASP.NET 10 runtime para ejecución mínima y segura):
+
+- **`Dockerfile.EmanuelKilibarda`** (Emanuel Rafael Kilibarda Rocha):
+  - Etapa 1 (`build`): Imagen base `mcr.microsoft.com/dotnet/sdk:10.0`, restaura dependencias sobre la copia de `CatalogoApi.csproj` y ejecuta `dotnet publish -c Release -o /app/publish --no-restore /p:UseAppHost=false`.
+  - Etapa 2 (`final`): Imagen base `mcr.microsoft.com/dotnet/aspnet:10.0`, crea `/app/keys` con permisos para el usuario sin privilegios `app`, define `DATA_PROTECTION_KEYS_PATH=/app/keys`, expone el puerto `8080` y corre bajo `USER app`.
+  - Comando de construcción:
+    ```bash
+    docker build -f Dockerfile.EmanuelKilibarda -t catalogo-api:emanuel .
+    ```
+- **`Dockerfile.AbrahamValeriano`** (Abraham Valeriano): Utilizado en `docker-compose.dev.yml` para levantar la solución con PostgreSQL y Frontend.
+- **`Dockerfile.MarcoArias`** (Marco Antonio Arias Girón): Dockerfile individual multi-etapa de Marco.
+
+---
+
 Flujo de trabajo y ejecucion
 
 Las reglas para hacer fork, nombrar ramas, escribir commits y abrir Pull Requests estan detalladas en CONTRIBUTING.md.
